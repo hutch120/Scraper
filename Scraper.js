@@ -26,11 +26,14 @@ function Scraper() {
 		_.optsTest = {};
 
 		// URLs to scrape
-		_.optsLive.NeuralURL = 'SEE LINKS FILE';
 		_.optsTest.NeuralURL = 'http://localhost/neuraltest.html?raceid=';
-
-		_.optsLive.ResultsURL = 'SEE LINKS FILE';
 		_.optsTest.ResultsURL = 'http://localhost/resultstest.html?raceid=';
+		_.optsTest.ElasticSearchURL = 'http://localhost:9200/localhost/neural/';
+		
+		_.optsLive.NeuralURL = 'SEE LINKS';
+		_.optsLive.ResultsURL = 'SEE LINKS';
+		_.optsTest.ElasticSearchURL = _.optsTest.ElasticSearchURL;
+		
 		
 		if ( _.testing ) {
 			_.opts = _.optsTest;
@@ -84,23 +87,23 @@ function Scraper() {
 				throw error;
 			}
 			
-			var $html = cheerio.load(html);
-			var $table = cheerio.load($html('#offTblBdy2').parent().html());
+			var html = cheerio.load(html);
+			var table = cheerio.load(html('#offTblBdy2').parent().html());
 			
-			$table('tr th').each(function(i, element){
-				var a = $table(this);
+			table('tr th').each(function(i, element){
+				var a = table(this);
 				//debug(i + ': ' + a.text());
 				headers[i] = a.text().trim();
 			});
 
 			//debugObject('headers', headers);
 
-			$table('tbody tr').each(function(i, element){
-				var a = $table(this);
+			table('tbody tr').each(function(i, element){
+				var a = table(this);
 				_.races[raceID].data[i+1] = {};
 			
 				a.find('td').each(function(j, element){
-					var b = $table(this);
+					var b = table(this);
 					//debug(i + ': ' + b.text());
 					//debug('headers[i]: ' + headers[i]);
 					
@@ -132,13 +135,13 @@ function Scraper() {
 				throw error;
 			}
 			
-			var $html = cheerio.load(html);
-			var $table = cheerio.load($html('table .normbold').parent().html());
+			var html = cheerio.load(html);
+			var table = cheerio.load(html('table .normbold').parent().html());
 			var skipRow = false;
 			var rowIndex = 0;
 			
-			$table('tr').each(function(row, element){
-				var a = $table(this);
+			table('tr').each(function(row, element){
+				var a = table(this);
 				
 				if ( a.text().trim() == '' ) {
 					skipRow = true;
@@ -150,7 +153,7 @@ function Scraper() {
 				}
 				
 				a.find('td').each(function(col, element){
-					var tablecell = $table(this);
+					var tablecell = table(this);
 					
 					//debug('b.text().trim(): ' + b.text().trim());
 					if ( row == 0 ) {
@@ -192,10 +195,45 @@ function Scraper() {
 	}
 	
 	_.resultsFinished = function (raceID) {
-		debugObject('race', _.races[raceID]);
+		//debugObject('race', _.races[raceID]);
+		_.insertRace(raceID);
 	}
 	
+	_.insertRace = function (raceID) {
 	
+		var url = _.opts.ElasticSearchURL + raceID + '/_update';
+
+        _.esDSL = '{ "doc" : ' + JSON.stringify(_.races[raceID]) + ', "doc_as_upsert": true}';
+
+		debug(url);
+        debug(_.esDSL);
+
+		var options = {
+		  method: 'post',
+		  json: true,
+		  url: url,
+		  body: _.esDSL,
+		}
+
+		debugObject('options', options);
+		
+		// TODO: This causes elastic search to go 100% CPU! 
+		// Tested DSL code on _plugin/head, and insert working so JSON format correct.
+		/*
+		request(options, function (err, res, body) {
+		  if (err) {
+			debugObject('error posting json', err)
+		  } else {
+			  var headers = res.headers
+			  var statusCode = res.statusCode
+			  debugObject('headers', headers)
+			  debugObject('statusCode', statusCode)
+			  debugObject('body', body)
+		  }
+		})*/
+
+	}
+
 }
 
 
