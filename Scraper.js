@@ -97,14 +97,14 @@ function Scraper() {
 
 			$table('tbody tr').each(function(i, element){
 				var a = $table(this);
-				_.races[raceID].data[i] = {};
+				_.races[raceID].data[i+1] = {};
 			
 				a.find('td').each(function(j, element){
 					var b = $table(this);
 					//debug(i + ': ' + b.text());
 					//debug('headers[i]: ' + headers[i]);
 					
-					_.races[raceID].data[i][headers[j]] = b.text().trim()
+					_.races[raceID].data[i+1][headers[j]] = b.text().trim();
 				});
 			});
 
@@ -173,14 +173,16 @@ function Scraper() {
 				}
 			});
 
-			debugObject('headers', headers);
-			debugObject('results', _.races[raceID].results);
+			//debugObject('headers', headers);
+			//debugObject('results', _.races[raceID].results);
 			
-			// TODO: WORKING HERE...
 			// Insert place into data for easier retrieval.
-			for (result in _.races[raceID].results) {
-				debugObject('aaa', result);
-				//debugObject('aaa', _.races[raceID].data[result['TAB']]);
+			for (var key in _.races[raceID].results) {
+				
+				var tab = _.races[raceID].results[key].TAB;
+				var fp = _.races[raceID].results[key].FP;
+				//debug('tab: ' + tab);
+				_.races[raceID].data[tab]['FP'] = fp;
 			}
 			
 			_.resultsFinished(raceID);
@@ -190,7 +192,7 @@ function Scraper() {
 	}
 	
 	_.resultsFinished = function (raceID) {
-		//debugObject('race', _.races[raceID]);
+		debugObject('race', _.races[raceID]);
 	}
 	
 	
