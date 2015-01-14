@@ -16,20 +16,25 @@ scraper.run();
  */
 function Scraper() {
 
+	// Clean reference to private class variables.
 	var _ = this;
 
+	// true: parse test data, false: parse online data.
 	var testing;
 	_.testing = true;
 
+	// Set program options.
 	var opts;
 	_.opts = opts = {};
 
+	// Data object.
 	var races;
 	_.races = races = {};
 
+	// Elastic Search Client
 	var esclient;
 	_.esclient = esclient;
-	
+
 	/**
 	 * Set options for the class.
 	 *
@@ -56,7 +61,7 @@ function Scraper() {
 
 		_.esclient = new elasticsearch.Client({
 				host : _.optsLive.ElasticSearchHost,
-				log : 'error'
+				log : 'warning'
 			});
 
 		if (_.testing) {
@@ -82,9 +87,9 @@ function Scraper() {
 
 		debugObject('raceIDs', raceIDs);
 
-		var getWebSiteData = [];
-		var insertWebSiteData = [];
-		
+		var getWebSiteDataPromise = [];
+		var insertWebSiteDataPromise = [];
+
 		for (raceID in raceIDs) {
 
 			debug('Parse raceID: ' + raceID);
@@ -93,22 +98,25 @@ function Scraper() {
 			_.races[raceID].raceID = raceID;
 
 			_.races[raceID].data = {};
-			getWebSiteData.push(_.getNeuralData(raceID));
+			getWebSiteDataPromise.push(_.getNeuralDataPromise(raceID));
 
 			_.races[raceID].results = {};
-			getWebSiteData.push(_.getResultsData(raceID));
-			
-			insertWebSiteData.push(_.insertRace(raceID));
+			getWebSiteDataPromise.push(_.getResultsDataPromise(raceID));
 		}
-		
-		Promise.all(getWebSiteData).then(function() {
+
+		Promise.all(getWebSiteDataPromise).then(function () {
 			debug("All the web site data has been retrived.");
-			
-			Promise.all(insertWebSiteData).then(function() {
+
+			// Must do this here to get populated _.races object.
+			for (raceID in raceIDs) {
+				insertWebSiteDataPromise.push(_.insertRacePromise(raceID));
+			}
+
+			Promise.all(insertWebSiteDataPromise).then(function () {
 				debug("All the web site data has been inserted.");
 				_.esclient.close();
-			});			
-		});		
+			});
+		});
 	}
 
 	/**
@@ -126,23 +134,32 @@ function Scraper() {
 	 *  BP - Barrier position (course & distance) algorithm
 	 *  DLR - days since last run algorithm
 	 *
-	 * @method parseNeuralData
+	 * @method getNeuralDataPromise
+	 * @return Promise
 	 * @public
 	 */
-	_.getNeuralData = function (raceID) {
+	_.getNeuralDataPromise = function (raceID) {
 		var url = '' + _.opts.NeuralURL + raceID + '';
 		debug('URL: ' + url);
-		
-		return rp({ url: url }).then(function (data) {
+
+		// return promise.
+		return rp({
+			url : url
+		}).then(function (data) {
 			_.parseNeuralData(data, raceID);
 		})
-		.catch(function (err) {
+		.catch (function (err) {
 			debug("err.message: " + err.message);
 			debug("err.res.statusCode: " + err.res.statusCode);
 		});
-		
 	}
 
+	/**
+	 * Parse neural data from web site.
+	 *
+	 * @method parseNeuralData
+	 * @private
+	 */
 	_.parseNeuralData = function (data, raceID) {
 		var headers = {};
 
@@ -170,22 +187,38 @@ function Scraper() {
 			});
 		});
 	}
-	
-	_.getResultsData = function (raceID) {
+
+	/**
+	 * Get results from web site and return promise.
+	 *
+	 * @method getResultsDataPromise
+	 * @return Promise
+	 * @private
+	 */
+	_.getResultsDataPromise = function (raceID) {
 		var url = '' + _.opts.ResultsURL + raceID + '';
 		debug('URL: ' + url);
 
-		return rp({ url: url }).then(function (data) {
+		// return promise.
+		return rp({
+			url : url
+		}).then(function (data) {
 			_.parseResultsData(data, raceID);
 		})
-		.catch(function (err) {
+		.catch (function (err) {
 			debug("err.message: " + err.message);
 			debug("err.res.statusCode: " + err.res.statusCode);
-		});		
+		});
 	}
 
+	/**
+	 * Parse results data from web site.
+	 *
+	 * @method parseResultsData
+	 * @private
+	 */
 	_.parseResultsData = function (data, raceID) {
-	
+
 		var headers = {};
 		var html = cheerio.load(data);
 		var table = cheerio.load(html('table .normbold').parent().html());
@@ -230,10 +263,16 @@ function Scraper() {
 
 		//debugObject('headers', headers);
 		//debugObject('results', _.races[raceID].results);
-
 	}
 
-	_.insertRace = function (raceID) {
+	/**
+	 * Insert data into Elastic Search
+	 *
+	 * @method insertRace
+	 * @return Promise
+	 * @private
+	 */
+	_.insertRacePromise = function (raceID) {
 
 		// Insert place into data for easier retrieval.
 		for (var key in _.races[raceID].results) {
@@ -243,28 +282,18 @@ function Scraper() {
 			//debug('tab: ' + tab);
 			_.races[raceID].data[tab]['FP'] = fp;
 		}
-	
-		//var url = _.opts.ElasticSearchURL + raceID + '/_update';
 
-		//_.esDSL = '{ "doc" : ' + JSON.stringify(_.races[raceID]) + ', "doc_as_upsert": true}';
-
-		//debug(url);
-		//debug(_.esDSL);
-
-		// TODO: This causes elastic search to go 100% CPU!
-		// Tested DSL code on _plugin/head, and insert working so JSON format correct.
-		_.esclient.index({
+		// return promise.
+		return _.esclient.index({
 			index : _.opts.ElasticSearchIndex,
 			type : _.opts.ElasticSearchType,
 			id : raceID,
-			body : JSON.stringify(_.races[raceID])
-		}, function (error, response) {
-			if ( typeof error !== 'undefined' ) {
-				debugObject('error', error);
-			}
-			debugObject('response', response);
+			body : _.races[raceID]
+		}).then(function (body) {
+			debug('Data indexed.');
+		}, function (error) {
+			debug(error.message);
 		});
-
 	}
 }
 
@@ -293,5 +322,5 @@ function debugNoNewline(msg) {
 
 // For request promise handling.
 function clientError(e) {
-    return e.code >= 400 && e.code < 500;
+	return e.code >= 400 && e.code < 500;
 }
