@@ -3,6 +3,7 @@ var traceback = require("traceback");
 var rp = require('request-promise');
 var cheerio = require('cheerio');
 var elasticsearch = require('elasticsearch');
+var urljs = require('url');
 
 'use strict'
 var scraper = new Scraper();
@@ -27,7 +28,14 @@ function Scraper() {
 	var opts;
 	_.opts = opts = {};
 
-	// Data object.
+	// Meetings data object.
+	var meetings;
+	_.meetings = meetings = {};
+	
+	var raceIDs;
+	_.raceIDs = raceIDs;
+	
+	// Races data object.
 	var races;
 	_.races = races = {};
 
@@ -47,12 +55,14 @@ function Scraper() {
 		_.optsTest = {};
 
 		// URLs to scrape
+		_.optsTest.FullResultsURL = 'http://localhost/fullresults.html';
 		_.optsTest.NeuralURL = 'http://localhost/neuraltest.html?raceid=';
 		_.optsTest.ResultsURL = 'http://localhost/resultstest.html?raceid=';
 		_.optsTest.ElasticSearchHost = 'localhost:9200';
 		_.optsTest.ElasticSearchIndex = 'localhost';
 		_.optsTest.ElasticSearchType = 'neural';
 
+		_.optsLive.FullResultsURL = 'SEE LINKS';
 		_.optsLive.NeuralURL = 'SEE LINKS';
 		_.optsLive.ResultsURL = 'SEE LINKS';
 		_.optsLive.ElasticSearchHost = _.optsTest.ElasticSearchHost;
@@ -80,47 +90,144 @@ function Scraper() {
 	 */
 	_.run = function () {
 
-		var raceIDs = {
+		_.raceIDs = {
 			'547374' : '',
 			'547375' : ''
 		};
 
-		debugObject('raceIDs', raceIDs);
+		debugObject('raceIDs', _.raceIDs);
 
+		var getMeetingDataPromise = [];
+		var getRaceIDsDataPromise = [];
+		var getRacesDataPromise = [];
 		var getWebSiteDataPromise = [];
 		var insertWebSiteDataPromise = [];
+		var url = '';
+		
+		getMeetingDataPromise.push(_.getDataPromise(_.opts.FullResultsURL, 0, _.parseMeetingData));
+		
+		Promise.all(getMeetingDataPromise).then(function () {
 
-		for (raceID in raceIDs) {
-
-			debug('Parse raceID: ' + raceID);
-
-			_.races[raceID] = {};
-			_.races[raceID].raceID = raceID;
-
-			_.races[raceID].data = {};
-			getWebSiteDataPromise.push(_.getNeuralDataPromise(raceID));
-
-			_.races[raceID].results = {};
-			getWebSiteDataPromise.push(_.getResultsDataPromise(raceID));
-		}
-
-		Promise.all(getWebSiteDataPromise).then(function () {
-			debug("All the web site data has been retrived.");
-
-			// Must do this here to get populated _.races object.
-			for (raceID in raceIDs) {
-				insertWebSiteDataPromise.push(_.insertRacePromise(raceID));
+			for (var key in _.meetings) {
+				url = _.optsTest.FullResultsURL + _.meetings[key];
+				//debug('url: ' + url);
+				getRaceIDsDataPromise.push(_.getDataPromise(url, 0, _.parseRaceIDsData));
 			}
+			
+			Promise.all(getRaceIDsDataPromise).then(function () {
+			
+				for (raceID in _.raceIDs) {
 
-			Promise.all(insertWebSiteDataPromise).then(function () {
-				debug("All the web site data has been inserted.");
-				_.esclient.close();
+					_.races[raceID] = {};
+					_.races[raceID].raceID = raceID;
+
+					_.races[raceID].data = {};
+					url = '' + _.opts.NeuralURL + raceID + '';
+					getWebSiteDataPromise.push(_.getDataPromise(url, raceID, _.parseNeuralData));
+
+					_.races[raceID].results = {};
+					url = '' + _.opts.ResultsURL + raceID + '';
+					getWebSiteDataPromise.push(_.getDataPromise(url, raceID, _.parseResultsData));
+				}
+
+				Promise.all(getWebSiteDataPromise).then(function () {
+					debug("All the web site data has been retrived.");
+
+					// Must do this here to get populated _.races object.
+					for (raceID in _.raceIDs) {
+						insertWebSiteDataPromise.push(_.insertRacePromise(raceID));
+					}
+
+					Promise.all(insertWebSiteDataPromise).then(function () {
+						debug("All the web site data has been inserted.");
+						_.esclient.close();
+					});
+				});
 			});
 		});
 	}
 
+
 	/**
-	 * Parse Neural Data
+	 * Get results from web site and return promise.
+	 *
+	 * @method getDataPromise
+	 * @return Promise
+	 * @private
+	 */
+	_.getDataPromise = function (url, id, callback) {
+		//debug('Get data promise for URL: ' + url + ' ID: ' + id);
+
+		// return promise.
+		return rp({
+			url : url
+		}).then(function (data) {
+			debug('Data retrieved from URL: ' + url + ' callback with ID: ' + id);
+			callback(data, id);
+		})
+		.catch (function (err) {
+			debug("getDataPromise - err.message: " + err.message);
+		});
+	}	
+	
+	/**
+	 * Parse meeting data from web site.
+	 *
+	 * @method parseMeetingData
+	 * @private
+	 */
+	_.parseMeetingData = function (data, id) {
+		debug('Parse meeting data');
+		
+		var headers = {};
+
+		var html = cheerio.load(data);
+	
+		var list = cheerio.load(html('#meetings').html());
+
+		list('a').each(function (i, element) {
+			var a = list(this);
+			var queryObject = urljs.parse(a.attr('href'));
+			//console.log(queryObject);
+			//debug(i + ': ' + queryObject.query);
+			_.meetings[i+1] = queryObject.search;
+		});
+
+		//debugObject('meetings', _.meetings);
+	}	
+
+	/**
+	 * Parse meeting data from web site.
+	 *
+	 * @method parseMeetingData
+	 * @private
+	 */
+	_.parseRaceIDsData = function (data, id) {
+		debug('Parse raceids data TODO: WORKING HERE....');
+		
+		/*
+		var headers = {};
+
+		var html = cheerio.load(data);
+	
+		var list = cheerio.load(html('.raceheader table tbody .nf').html());
+
+		debug(list);*/
+		
+		/*
+		list('a').each(function (i, element) {
+			var a = list(this);
+			var queryObject = urljs.parse(a.attr('href'));
+			//console.log(queryObject);
+			//debug(i + ': ' + queryObject.query);
+			_.meetings[i+1] = queryObject.search;
+		});*/
+
+		//debugObject('meetings', _.meetings);
+	}		
+	
+	/**
+	 * Parse neural data from web site.
 	 *
 	 * See ./testpage/neuraltest.html for example.
 	 *  CP - Career performance assessment based on weight/class algorithms
@@ -134,33 +241,11 @@ function Scraper() {
 	 *  BP - Barrier position (course & distance) algorithm
 	 *  DLR - days since last run algorithm
 	 *
-	 * @method getNeuralDataPromise
-	 * @return Promise
-	 * @public
-	 */
-	_.getNeuralDataPromise = function (raceID) {
-		var url = '' + _.opts.NeuralURL + raceID + '';
-		debug('URL: ' + url);
-
-		// return promise.
-		return rp({
-			url : url
-		}).then(function (data) {
-			_.parseNeuralData(data, raceID);
-		})
-		.catch (function (err) {
-			debug("err.message: " + err.message);
-			debug("err.res.statusCode: " + err.res.statusCode);
-		});
-	}
-
-	/**
-	 * Parse neural data from web site.
-	 *
 	 * @method parseNeuralData
 	 * @private
 	 */
 	_.parseNeuralData = function (data, raceID) {
+		debug('Parse neural data for ID: ' + raceID);
 		var headers = {};
 
 		var html = cheerio.load(data);
@@ -189,36 +274,14 @@ function Scraper() {
 	}
 
 	/**
-	 * Get results from web site and return promise.
-	 *
-	 * @method getResultsDataPromise
-	 * @return Promise
-	 * @private
-	 */
-	_.getResultsDataPromise = function (raceID) {
-		var url = '' + _.opts.ResultsURL + raceID + '';
-		debug('URL: ' + url);
-
-		// return promise.
-		return rp({
-			url : url
-		}).then(function (data) {
-			_.parseResultsData(data, raceID);
-		})
-		.catch (function (err) {
-			debug("err.message: " + err.message);
-			debug("err.res.statusCode: " + err.res.statusCode);
-		});
-	}
-
-	/**
 	 * Parse results data from web site.
 	 *
 	 * @method parseResultsData
 	 * @private
 	 */
 	_.parseResultsData = function (data, raceID) {
-
+		debug('Parse results data for ID: ' + raceID);
+		
 		var headers = {};
 		var html = cheerio.load(data);
 		var table = cheerio.load(html('table .normbold').parent().html());
@@ -273,7 +336,8 @@ function Scraper() {
 	 * @private
 	 */
 	_.insertRacePromise = function (raceID) {
-
+		debug('Insert Race Data for ID: ' + raceID);
+	
 		// Insert place into data for easier retrieval.
 		for (var key in _.races[raceID].results) {
 
@@ -306,8 +370,8 @@ function debug(msg) {
 	}
 
 	var d = new Date();
-	// var tb = traceback()[1]; // 1 because 0 should be your enterLog-Function itself
-	// console.log(d.toJSON() + ' ' + tb.file + ':' + tb.line + ':\t' + msg);
+	//var tb = traceback(); // 1 because 0 should be your enterLog-Function itself
+	//console.log(d.toJSON() + ' ' + tb.file + ':' + tb.line + ':\t' + msg);
 	console.log(d.toJSON() + ':\t' + msg);
 }
 
