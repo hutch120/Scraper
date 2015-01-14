@@ -1,0 +1,3 @@
+
+		_.optsLive.NeuralURL = 'http://www.racingandsports.com.au/en/betfair-form/neural.asp?raceid=';
+		_.optsLive.ResultsURL = 'http://www.racingandsports.com.au/en/form-guide/results.asp?action=full&raceid=';

@@ -1,0 +1,1182 @@
+
+
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<script type="text/javascript">
+//<![CDATA[
+try{if (!window.CloudFlare) {var CloudFlare=[{verbose:0,p:0,byc:0,owlid:"cf",bag2:1,mirage2:0,oracle:0,paths:{cloudflare:"/cdn-cgi/nexp/dok2v=1613a3a185/"},atok:"f53fed2ec4907e5226ab53a584bd4e47",petok:"effe6ceb1dd09bdaea5e4a741556a5f92c8b90b0-1420970324-1800",zone:"racingandsports.com.au",rocket:"0",apps:{"ga_key":{"ua":"UA-6311879-1","ga_bs":"2"}}}];!function(a,b){a=document.createElement("script"),b=document.getElementsByTagName("script")[0],a.async=!0,a.src="//ajax.cloudflare.com/cdn-cgi/nexp/dok2v=919620257c/cloudflare.min.js",b.parentNode.insertBefore(a,b)}()}}catch(e){};
+//]]>
+</script>
+<script type="text/javascript">//<![CDATA[
+	function scratchHorse(id, tab, chk) {
+		var tblEl = document.getElementById(id);
+		
+		if (!chk) {
+			for (i = 0; i < tblEl.rows.length - 1; i++) {
+				if (getTextValue(tblEl.rows[i].cells[1]) == tab) {
+					tblEl.rows[i].cells[7].innerHTML = 1;
+					tmpEl = tblEl.removeChild(tblEl.rows[i]);
+					tblEl.insertBefore(tmpEl, null);
+					break;
+				}
+			}
+			hidediv('runner' + tab);
+		}
+		else {
+			for (i = 0; i < tblEl.rows.length; i++) {
+				if (getTextValue(tblEl.rows[i].cells[1]) == tab) {
+					tblEl.rows[i].cells[7].innerHTML = 0;
+					break;
+				}
+			}
+			showdiv('runner' + tab);
+			sortTable('offTblBdy', 7, false);
+		}
+		
+		return true;
+	}
+	
+	function sortTable(id, col, rev) {
+		var tblEl = document.getElementById(id);
+		
+		if (tblEl.reverseSort == null) {
+			tblEl.reverseSort = new Array();
+			tblEl.lastColumn = 1;
+		}
+		
+		if (tblEl.reverseSort[col] == null)
+			tblEl.reverseSort[col] = rev;
+		
+		if (col == tblEl.lastColumn)
+			tblEl.reverseSort[col] = !tblEl.reverseSort[col];
+		
+		var oldDsply = tblEl.style.display;
+		tblEl.style.display = "none";
+		
+		var tmpEl;
+		var i, j;
+		var minVal, minIdx;
+		var testVal;
+		var cmp;
+		var formrowValue;
+		var testFormrowValue;
+		var minRowIdx;
+		var minFormrowValue;
+		if (id == "offTblBdy_test"){
+			for (i = 0; i < tblEl.rows.length - 1; i+=2) {
+				minIdx = i;
+				minVal = getTextValue(tblEl.rows[i].cells[col]);
+				formrowValue = getTextValue(tblEl.rows[i+1].cells[0]);
+				for (j = i + 2; j < tblEl.rows.length; j+=2) {
+					testVal = getTextValue(tblEl.rows[j].cells[col]);
+					testFormrowValue = getTextValue(tblEl.rows[j+1].cells[0]);
+					cmp = compareValues(minVal, testVal);
+					
+					if (tblEl.reverseSort[col])
+						cmp = -cmp;
+					
+					if (cmp == 0 && col != tblEl.lastColumn)
+						cmp = compareValues(getTextValue(tblEl.rows[minIdx].cells[tblEl.lastColumn]),
+						getTextValue(tblEl.rows[j].cells[tblEl.lastColumn]));
+					
+					if (cmp > 0) {
+						minIdx = j;
+						minVal = testVal;
+						minRowIdx = j + 1;
+						minFormrowValue = testFormrowValue;
+					}
+				}
+				
+				if (minIdx > i) {
+					tmpEl = tblEl.removeChild(tblEl.rows[minIdx]);
+					tblEl.insertBefore(tmpEl, tblEl.rows[i]);
+					tmpEl = tblEl.removeChild(tblEl.rows[minRowIdx]);
+					tblEl.insertBefore(tmpEl, tblEl.rows[i+1]);
+				}
+			}
+			var complen;
+			complen = tblEl.rows.length;
+			for (i = 0; i < complen; i+=2) {
+				for (j = 0; j < complen; j+=2) {
+					if (getTextValue(tblEl.rows[j].cells[7]) == 1 || getTextValue(tblEl.rows[j].cells[7]) == "1") {
+						tmpEl = tblEl.removeChild(tblEl.rows[j]);
+						tblEl.insertBefore(tmpEl, null);
+						tmpEl = tblEl.removeChild(tblEl.rows[j+1]);
+						tblEl.insertBefore(tmpEl, null);
+						complen = complen - 1;
+						break;
+					}
+				}
+			}
+			tblEl.lastColumn = col;
+			makePrettySP(tblEl, col);
+			//setRanks(tblEl, col, rev);
+			tblEl.style.display = oldDsply;
+		}else{
+			for (i = 0; i < tblEl.rows.length - 1; i++) {
+				minIdx = i;
+				minVal = getTextValue(tblEl.rows[i].cells[col]);
+				
+				for (j = i + 1; j < tblEl.rows.length; j++) {
+					testVal = getTextValue(tblEl.rows[j].cells[col]);
+					cmp = compareValues(minVal, testVal);
+					
+					if (tblEl.reverseSort[col])
+						cmp = -cmp;
+					
+					if (cmp == 0 && col != tblEl.lastColumn)
+						cmp = compareValues(getTextValue(tblEl.rows[minIdx].cells[tblEl.lastColumn]),
+						getTextValue(tblEl.rows[j].cells[tblEl.lastColumn]));
+					
+					if (cmp > 0) {
+						minIdx = j;
+						minVal = testVal;
+					}
+				}
+				
+				if (minIdx > i) {
+					tmpEl = tblEl.removeChild(tblEl.rows[minIdx]);
+					tblEl.insertBefore(tmpEl, tblEl.rows[i]);
+				}
+			}
+			var complen;
+			complen = tblEl.rows.length;
+			for (i = 0; i < complen; i++) {
+				for (j = 0; j < complen; j++) {
+					if (getTextValue(tblEl.rows[j].cells[7]) == 1 || getTextValue(tblEl.rows[j].cells[7]) == "1") {
+						tmpEl = tblEl.removeChild(tblEl.rows[j]);
+						tblEl.insertBefore(tmpEl, null);
+						complen = complen - 1;
+						break;
+					}
+				}
+			}
+			tblEl.lastColumn = col;
+			makePretty(tblEl, col);
+			//setRanks(tblEl, col, rev);
+			tblEl.style.display = oldDsply;
+		}
+		return false;
+	}
+	
+	if (document.ELEMENT_NODE == null) {
+		document.ELEMENT_NODE = 1;
+		document.TEXT_NODE = 3;
+	}
+	
+	function getTextValue(el) {
+		var i;
+		var s;
+		
+		s = "";
+		for (i = 0; i < el.childNodes.length; i++)
+			if (el.childNodes[i].nodeType == document.TEXT_NODE)
+				s += el.childNodes[i].nodeValue;
+			else if (el.childNodes[i].nodeType == document.ELEMENT_NODE &&
+				el.childNodes[i].tagName == "BR")
+				s += " ";
+			else
+				s += getTextValue(el.childNodes[i]);
+		
+		return normalizeString(s);
+	}
+	
+	function compareValues(v1, v2) {
+		var f1, f2;
+		
+		f1 = parseFloat(v1.replace(/\$/gi, ""));
+		f2 = parseFloat(v2.replace(/\$/gi, ""));
+		if (!isNaN(f1) && !isNaN(f2)) {
+			v1 = f1;
+			v2 = f2;
+		}
+		
+		if (v1 == v2)
+			return 0;
+		if (v1 > v2)
+			return 1
+			return -1;
+	}
+	
+	var whtSpEnds = new RegExp("^\\s*|\\s*$", "g");
+	var whtSpMult = new RegExp("\\s\\s+", "g");
+	
+	function normalizeString(s) {
+		s = s.replace(whtSpMult, " ");  // Collapse any multiple whites space.
+		s = s.replace(whtSpEnds, "");   // Remove leading or trailing white space.
+		
+		return s;
+	}
+	
+	var rowClsNm = "alternateRow";
+	var colClsNm = "sortedColumn";
+	var rowTest = new RegExp(rowClsNm, "gi");
+	var colTest = new RegExp(colClsNm, "gi");
+	
+	function makePrettySP(tblEl, col) {
+		var i, j, x = 0;
+		var rowEl, cellEl;
+		
+		for (i = 0; i < tblEl.rows.length; i+=2) {
+			rowEl = tblEl.rows[i];
+			rowEl.className = rowEl.className.replace(rowTest, "");
+			if (x % 2 != 0)
+				rowEl.className += " " + rowClsNm;
+			rowEl.className = normalizeString(rowEl.className);
+			
+			for (j = 2; j < tblEl.rows[i].cells.length; j++) {
+				cellEl = rowEl.cells[j];
+				cellEl.className = cellEl.className.replace(colTest, "");
+				if (j == col)
+					cellEl.className += " " + colClsNm;
+				cellEl.className = normalizeString(cellEl.className);
+			}
+			x++;
+		}
+	
+		var el = tblEl.parentNode.tHead;
+		rowEl = el.rows[el.rows.length - 1];
+		
+		for (i = 2; i < rowEl.cells.length; i++) {
+			cellEl = rowEl.cells[i];
+			cellEl.className = cellEl.className.replace(colTest, "");
+		
+		if (i == col)
+			cellEl.className += " " + colClsNm;
+			cellEl.className = normalizeString(cellEl.className);
+		}
+	}
+	
+	function makePretty(tblEl, col) {
+		var i, j;
+		var rowEl, cellEl;
+		
+		for (i = 0; i < tblEl.rows.length; i++) {
+			rowEl = tblEl.rows[i];
+			rowEl.className = rowEl.className.replace(rowTest, "");
+			if (i % 2 != 0)
+				rowEl.className += " " + rowClsNm;
+			rowEl.className = normalizeString(rowEl.className);
+			
+			for (j = 2; j < tblEl.rows[i].cells.length; j++) {
+				cellEl = rowEl.cells[j];
+				cellEl.className = cellEl.className.replace(colTest, "");
+				if (j == col)
+					cellEl.className += " " + colClsNm;
+				cellEl.className = normalizeString(cellEl.className);
+			}
+		}
+	
+		var el = tblEl.parentNode.tHead;
+		rowEl = el.rows[el.rows.length - 1];
+		
+		for (i = 2; i < rowEl.cells.length; i++) {
+			cellEl = rowEl.cells[i];
+			cellEl.className = cellEl.className.replace(colTest, "");
+		
+		if (i == col)
+			cellEl.className += " " + colClsNm;
+			cellEl.className = normalizeString(cellEl.className);
+		}
+	}
+	
+	function setRanks(tblEl, col, rev) {
+		var i    = 0;
+		var incr = 1;
+		if (tblEl.reverseSort[col])
+			rev = !rev;
+		if (rev) {
+			incr = -1;
+			i = tblEl.rows.length - 1;
+		}
+		
+		var count   = 1;
+		var rank    = count;
+		var curVal;
+		var lastVal = null;
+		
+		while (col > 1 && i >= 0 && i < tblEl.rows.length) {
+			curVal = getTextValue(tblEl.rows[i].cells[col]);
+			
+			if (lastVal != null && compareValues(curVal, lastVal) != 0)
+				rank = count;
+			
+			tblEl.rows[i].rank = rank;
+			
+			lastVal = curVal;
+			count++;
+			i += incr;
+		}
+		
+		var rowEl, cellEl;
+		var lastRank = 0;
+		
+		for (i = 0; i < tblEl.rows.length; i++) {
+			rowEl = tblEl.rows[i];
+			cellEl = rowEl.cells[0];
+			
+			while (cellEl.lastChild != null)
+				cellEl.removeChild(cellEl.lastChild);
+			
+			if (col > 1 && rowEl.rank != lastRank) {
+				cellEl.appendChild(document.createTextNode(rowEl.rank));
+				lastRank = rowEl.rank;
+			}
+		}
+	}
+	
+	function showdiv(layer_ref){
+		if(document.all){ //IS IE 4 or 5 (or 6 beta)
+			eval("document.all." +layer_ref+ ".style.display = 'block'");
+		}
+		if (document.layers) { //IS NETSCAPE 4 or below
+			document.layers[layer_ref].display = 'block';
+		}
+		if (document.getElementById &&!document.all) {
+			hza = document.getElementById(layer_ref);
+			hza.style.display = 'block';
+		}
+	}
+	
+	function hidediv(layer_ref){
+		if(document.all){ //IS IE 4 or 5 (or 6 beta)
+			eval("document.all." +layer_ref+ ".style.display = 'none'");
+		}
+		if (document.layers) { //IS NETSCAPE 4 or below
+			document.layers[layer_ref].display = 'none';
+		}
+		if (document.getElementById &&!document.all) {
+			hza = document.getElementById(layer_ref);
+			hza.style.display = 'none';
+		}
+	}
+	
+	function showhidediv(layer_ref){
+		//if(document.all){ //IS IE 4 or 5 (or 6 beta)
+		//	eval("document.all." +layer_ref+ ".style.display = 'none'");
+		//}
+		if (document.layers) { //IS NETSCAPE 4 or below
+			if (document.layers[layer_ref].display = 'none') {
+				document.layers[layer_ref].display = 'block';
+			} else {
+				document.layers[layer_ref].display = 'none';
+			}
+		}
+		if (document.getElementById) {
+			hza = document.getElementById(layer_ref);
+			if (hza.style.display == 'none') {
+				hza.style.display = 'block';
+			} else {
+				hza.style.display = 'none';
+			}
+		}
+	}
+	
+	function setImpSession(n) {
+		var url = "setImpSession.asp?isimp=" + n;
+		var xmlhttp=false;
+		/*@cc_on @*/
+		/*@if (@_jscript_version >= 5)
+		// JScript gives us Conditional compilation, we can cope with old IE versions.
+		// and security blocked creation of the objects.
+		 try {
+		  xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+		 } catch (e) {
+		  try {
+		   xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+		  } catch (E) {
+		   xmlhttp = false;
+		  }
+		 }
+		@end @*/
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			try {
+				xmlhttp = new XMLHttpRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+		if (!xmlhttp && window.createRequest) {
+			try {
+				xmlhttp = window.createRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+
+		xmlhttp.open("GET", url,true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				//alert(xmlhttp.responseText)
+			}
+		}
+		xmlhttp.send(null)
+
+		location.reload(true);
+	}
+	
+	var oddsStr;
+	var oddsURL;
+	
+	function refreshOdds() {
+		if (oddsStr == null) {
+			oddsStr = "";
+		}
+		
+		var providers = oddsStr.split("|");
+		var pOdds;
+		for (var p1 in providers) {
+			pOdds = providers[p1].split(",");
+			if (pOdds.length > 50) {
+				if (document.getElementById('p' + pOdds[0] + 'pool') != null) {
+					if(pOdds[2] != "$0"){
+						document.getElementById('p' + pOdds[0] + 'pool').innerHTML = pOdds[2];
+					}
+				}
+				if (document.getElementById('p' + pOdds[0] + 'invt') != null) {
+					document.getElementById('p' + pOdds[0] + 'invt').innerHTML = pOdds[2];
+				}
+				if (document.getElementById('p' + pOdds[0] + 'mk') != null) {
+					document.getElementById('p' + pOdds[0] + 'mk').innerHTML = pOdds[53];
+				}
+				for (var p2 = 3; p2 < pOdds.length; ++p2) {
+					if (document.getElementById('p' + pOdds[0] + 't' + (p2 - 2)) != null) {
+						document.getElementById('p' + pOdds[0] + 't' + (p2 - 2)).innerHTML = pOdds[p2];
+					}
+				}
+			} else {
+				for (var p2 = 1; p2 < 10; ++p2) {
+					if (document.getElementById('p' + p2 + 't' + pOdds[0] + 'inv') != null) {
+						document.getElementById('p' + p2 + 't' + pOdds[0] + 'inv').innerHTML = pOdds[p2];
+					}
+				}
+				for (var p2 = 10; p2 < 18; ++p2) {
+					if (document.getElementById('t' + pOdds[0] + 'invh' + (p2 - 9)) != null) {
+						document.getElementById('t' + pOdds[0] + 'invh' + (p2 - 9)).innerHTML = pOdds[p2];
+					}
+				}
+			}
+		}
+		
+	    timerID = self.setTimeout("StartTheTimer()", 0)
+	}
+	
+	function getOdds() {
+		var xmlhttp = false;
+		var tempURL = oddsURL;
+		
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			xmlhttp = new XMLHttpRequest();
+		}
+		//alert(tempURL.replace("#cachetime", secs2));
+		xmlhttp.open("GET", tempURL.replace("#cachetime", secs2), true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				//document.getElementById(xId).innerHTML = xmlhttp.responseText;
+				oddsStr = xmlhttp.responseText;
+			}
+		}
+		xmlhttp.send(null);
+		
+		setTimeout("refreshOdds()", 1000);
+	}
+	
+	var oddsPageStr;
+	var fillOddsPageFlag;
+	
+	function fillLiveOddsPage() {
+		var xmlhttp = false;
+		var tempStr = "";
+		
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			xmlhttp = new XMLHttpRequest();
+		}
+		
+		xmlhttp.open("GET", "odds.asp?action=liveoddspage", true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				//document.getElementById(xId).innerHTML = xmlhttp.responseText;
+				oddsPageStr = xmlhttp.responseText;
+			}
+		}
+		xmlhttp.send(null);
+		
+		setTimeout("doFillLiveOddsPage()", 1000);
+	}
+	
+	function doFillLiveOddsPage() {
+		if (oddsPageStr == null && fillOddsPageFlag == null) {
+			oddsPageStr = "";
+			fillOddsPageFlag = "";
+			fillLiveOddsPage();
+		} else {
+			var providers = oddsPageStr.split("|");
+			
+			if (document.getElementById('nextracetojump') != null) {
+				document.getElementById('nextracetojump').innerHTML = providers[0];
+			}
+			if (document.getElementById('latestresults') != null) {
+				document.getElementById('latestresults').innerHTML = providers[1];
+			}
+			if (document.getElementById('meetinglist') != null) {
+				document.getElementById('meetinglist').innerHTML = providers[2];
+			}
+		}
+	}
+	
+	function displayResults(rid, xId) {
+		var url = "results.asp?action=full&raceid=" + rid;
+		var xmlhttp=false;
+		
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			try {
+				xmlhttp = new XMLHttpRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+		if (!xmlhttp && window.createRequest) {
+			try {
+				xmlhttp = window.createRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+
+		xmlhttp.open("GET", url,true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				document.getElementById(xId).innerHTML = xmlhttp.responseText;
+			}
+		}
+		xmlhttp.send(null)
+	}
+	
+	function displayAAPResults(rid, xId) {
+		var url = "results.asp?raceid=" + rid;
+		var xmlhttp=false;
+		
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			try {
+				xmlhttp = new XMLHttpRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+		if (!xmlhttp && window.createRequest) {
+			try {
+				xmlhttp = window.createRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+
+		xmlhttp.open("GET", url,true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				document.getElementById(xId).innerHTML = xmlhttp.responseText;
+			}
+		}
+		xmlhttp.send(null)
+	}
+	
+	function delCacheResults(rid, xId) {
+		var url = "results.asp?action=delfull&raceid=" + rid;
+		var xmlhttp=false;
+		
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			try {
+				xmlhttp = new XMLHttpRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+		if (!xmlhttp && window.createRequest) {
+			try {
+				xmlhttp = window.createRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+
+		xmlhttp.open("GET", url,true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				document.getElementById(xId).innerHTML = xmlhttp.responseText;
+			}
+		}
+		xmlhttp.send(null)
+	}
+	
+	function delCacheAAPResults(rid, xId) {
+		var url = "results.asp?action=del&raceid=" + rid;
+		var xmlhttp=false;
+		
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			try {
+				xmlhttp = new XMLHttpRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+		if (!xmlhttp && window.createRequest) {
+			try {
+				xmlhttp = window.createRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+
+		xmlhttp.open("GET", url,true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				document.getElementById(xId).innerHTML = xmlhttp.responseText;
+			}
+		}
+		xmlhttp.send(null)
+	}
+	
+	var runids;
+	
+	function loadUserComments() {
+		var url = "usercomments.asp?runids=" + runids;
+		var xmlhttp=false;
+		
+		if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+			try {
+				xmlhttp = new XMLHttpRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+		if (!xmlhttp && window.createRequest) {
+			try {
+				xmlhttp = window.createRequest();
+			} catch (e) {
+				xmlhttp=false;
+			}
+		}
+		
+		xmlhttp.open("GET", url,true);
+		xmlhttp.onreadystatechange=function() {
+			if (xmlhttp.readyState==4) {
+				var comments = xmlhttp.responseText.split("@#$%^");
+				var commentDetails;
+				for (var p1 in comments) {
+					commentDetails = comments[p1].split("^%$#@");
+					if (commentDetails.length > 1) {
+						if (document.getElementById('ufc' + commentDetails[0]) != null) {
+							document.getElementById('ufc' + commentDetails[0]).innerHTML = commentDetails[1];
+						}
+					}
+				}
+			}
+		}
+		xmlhttp.send(null)
+	}
+	
+//]]></script>
+<SCRIPT LANGUAGE="JavaScript">
+	<!--
+	var secs = 0
+	var secs2 = 0
+	var timerID = null
+	var timerRunning = false
+	var delay = 1000
+	var raceTime;
+	var timeoffset = 0;
+	
+	function InitializeTimer() {
+	    // Set the length of the timer, in seconds
+		if (timerRunning == false) {
+		    StopTheClock();
+			secs = 5;
+		    StartTheTimer();
+		} else {
+		    StopTheClock();
+		}
+	}
+	
+	function StopTheClock() {
+	    if(timerRunning)
+	        clearTimeout(timerID)
+	    timerRunning = false
+		secs = 0;
+		document.getElementById('nextrefreshtime').innerHTML = "";
+	}
+	
+	function StartTheTimer() {
+	    if (secs==0) {
+	        StopTheClock()
+			getOdds();
+			setSecs();
+			secs = secs2;
+	    } else {
+	        self.status = secs
+	        secs = secs - 1
+			document.getElementById('nextrefreshtime').innerHTML = secs;
+	        timerRunning = true
+	        timerID = self.setTimeout("StartTheTimer()", delay)
+	    }
+	}
+	
+	function setSecs() {
+		var timeDiff;
+		var nowTime = new Date();
+		timeDiff = (raceTime - nowTime + timeoffset) / 1000;
+		if (timeDiff < -3600)
+			secs2 = 1800;
+		else if (timeDiff < -300)
+			secs2 = 300;
+		else if (timeDiff < -120)
+			secs2 = 30;
+		else if (timeDiff < 120)
+			secs2 = 10;
+		else if (timeDiff < 300)
+			secs2 = 30;
+		else if (timeDiff < 900)
+			secs2 = 60;
+		else if (timeDiff < 1800)
+			secs2 = 120;
+		else if (timeDiff < 3600)
+			secs2 = 180;
+		else if (timeDiff < 7200)
+			secs2 = 300;
+		else if (timeDiff < 10800)
+			secs2 = 600;
+		else
+			secs2 = 1200;
+	}
+	//-->
+</SCRIPT>
+<script type="text/javascript">
+	var iframeids=["frameneural", "frameworksheet", "framebpstats"]
+	var iframehide="yes"
+	var getFFVersion=navigator.userAgent.substring(navigator.userAgent.indexOf("Firefox")).split("/")[1]
+	var FFextraHeight=parseFloat(getFFVersion)>=0.1? 16 : 0 //extra height in px to add to iframe in FireFox 1.0+ browsers
+	
+	function resizeCaller() {
+		var dyniframe=new Array()
+		for (i=0; i<iframeids.length; i++){
+			if (document.getElementById)
+				resizeIframe(iframeids[i])
+				//reveal iframe for lower end browsers? (see var above):
+			if ((document.all || document.getElementById) && iframehide=="no"){
+				var tempobj=document.all? document.all[iframeids[i]] : document.getElementById(iframeids[i])
+				tempobj.style.display="block"
+			}
+		}
+	}
+	
+	function resizeIframe(frameid){
+		var currentfr=document.getElementById(frameid)
+		if (currentfr && !window.opera){
+			currentfr.style.display="block"
+			if (currentfr.contentDocument && currentfr.contentDocument.body.offsetHeight) //ns6 syntax
+				currentfr.height = currentfr.contentDocument.body.offsetHeight+FFextraHeight; 
+			else if (currentfr.Document && currentfr.Document.body.scrollHeight) //ie5+ syntax
+				currentfr.height = currentfr.Document.body.scrollHeight;
+			if (currentfr.addEventListener)
+				currentfr.addEventListener("load", readjustIframe, false)
+			else if (currentfr.attachEvent){
+				currentfr.detachEvent("onload", readjustIframe) // Bug fix line
+				currentfr.attachEvent("onload", readjustIframe)
+			}
+		}
+	}
+	
+	function readjustIframe(loadevt) {
+		var crossevt=(window.event)? event : loadevt
+		var iframeroot=(crossevt.currentTarget)? crossevt.currentTarget : crossevt.srcElement
+		if (iframeroot)
+			resizeIframe(iframeroot.id);
+	}
+	
+	function loadintoIframe(iframeid, url){
+		if (document.getElementById)
+			document.getElementById(iframeid).src=url
+	}
+	
+	function displayFastResults(){
+		document.getElementById("fastResults").style.display="";
+		document.getElementById("fastresultslink").innerHTML = "<span id=\"fastresultslink\" style=\"font-size: 14px;\"><a class=\"normlink\" href=\"javascript: hideFastResults();\">Hide Fast Results</a></span>";
+	}
+	
+	function hideFastResults(){
+		document.getElementById("fastResults").style.display="none";
+		document.getElementById("fastresultslink").innerHTML = "<span id=\"fastresultslink\" style=\"font-size: 14px;\"><a class=\"normlink\" href=\"javascript: displayFastResults();\">Display Fast Results</a></span>";
+	}
+	
+	if (window.addEventListener)
+		window.addEventListener("load", resizeCaller, false)
+	else if (window.attachEvent)
+		window.attachEvent("onload", resizeCaller)
+	else
+		window.onload=resizeCaller
+</script>
+<script type="text/javascript">
+	function adjClock(tzid, htemp, mtemp, n) {
+		var h = parseFloat(htemp) + parseFloat(n);
+		var m = parseFloat(mtemp);
+		m = m + ((h - Math.floor(h)) * 60);
+		h = Math.floor(h)
+		if (m > 60) {
+			m = m - 60;
+			h = h + 1;
+		} else if (m < 0) {
+			m = m + 60;
+			h = h - 1;
+		}
+		if (h > 24) {
+			h = h - 24;
+		} else if (h < 0) {
+			h = h + 24;
+		}
+		var ltimestr = ((h < 10) ? "0" : "") + h + ":" + ((m < 10) ? "0" : "") + m;
+		//var clockstr = '<OBJECT classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0"  WIDTH=80 HEIGHT=80 ALIGN=center><PARAM NAME=movie VALUE="http://www.racingandsports.com.au/flash/RSClock.swf?timeStr=' + ltimestr + '">';
+		//clockstr = clockstr + '<PARAM NAME=quality VALUE=high><EMBED src="http://www.racingandsports.com.au/flash/RSClock.swf?timeStr=' + ltimestr + '" quality=high WIDTH=80 HEIGHT=80 ALIGN=center TYPE="application/x-shockwave-flash" PLUGINSPAGE="http://www.macromedia.com/go/getflashplayer"></EMBED></OBJECT>';
+		var clockstr = ltimestr;
+		
+		document.getElementById(tzid).innerHTML = clockstr
+	}
+</script>
+<link rel="stylesheet" href="http://www.racingandsports.com.au/styles/form-guide.css" TYPE="text/css">
+<link href="bfstyles/styles.css" type="text/css" rel="stylesheet">
+<script type="text/javascript">
+/* <![CDATA[ */
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-6311879-1']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+
+(function(b){(function(a){"__CF"in b&&"DJS"in b.__CF?b.__CF.DJS.push(a):"addEventListener"in b?b.addEventListener("load",a,!1):b.attachEvent("onload",a)})(function(){"FB"in b&&"Event"in FB&&"subscribe"in FB.Event&&(FB.Event.subscribe("edge.create",function(a){_gaq.push(["_trackSocial","facebook","like",a])}),FB.Event.subscribe("edge.remove",function(a){_gaq.push(["_trackSocial","facebook","unlike",a])}),FB.Event.subscribe("message.send",function(a){_gaq.push(["_trackSocial","facebook","send",a])}));"twttr"in b&&"events"in twttr&&"bind"in twttr.events&&twttr.events.bind("tweet",function(a){if(a){var b;if(a.target&&a.target.nodeName=="IFRAME")a:{if(a=a.target.src){a=a.split("#")[0].match(/[^?=&]+=([^&]*)?/g);b=0;for(var c;c=a[b];++b)if(c.indexOf("url")===0){b=unescape(c.split("=")[1]);break a}}b=void 0}_gaq.push(["_trackSocial","twitter","tweet",b])}})})})(window);
+/* ]]> */
+</script>
+</head>
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" bgcolor="#FFFFFF">
+ 
+ 
+ 
+<script type="text/javascript">
+            (function() {
+                var em = document.createElement('script'); em.type = 'text/javascript'; em.async = true;
+                em.src = ('https:' == document.location.protocol ? 'https://au-ssl' : 'http://au-cdn') + '.effectivemeasure.net/em.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(em, s);
+            })();
+        </script>
+<noscript>
+<img src="//au.effectivemeasure.net/em_image" alt="" style="position:absolute; left:-5px;"/>
+</noscript>
+ 
+<script type="text/javascript">
+        _atrk_opts = { atrk_acct:"TLmwi1asyr00UT", domain:"racingandsports.com.au",dynamic: true};
+        (function() { var as = document.createElement('script'); as.type = 'text/javascript'; as.async = true; as.src = "https://d31qbv1cthcecs.cloudfront.net/atrk.js"; var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(as, s); })();
+        </script>
+<noscript><img src="https://d5nxst8fruw4z.cloudfront.net/atrk.gif?account=TLmwi1asyr00UT" style="display:none" height="1" width="1" alt=""/></noscript>
+ 
+<form name="form1" id="form1" action="neural.asp?action=set" method="POST">
+<input type="Hidden" name="raceid" value="547374">
+<input type="Hidden" name="raceno" value="0">
+<input type="Hidden" name="coursecode" value="">
+<input type="Hidden" name="date" value="">
+<input type="Hidden" name="meetingid" value="">
+<div id="scaling" style="display: none;z-index: 1000;position: absolute; top: 35px; left: 150px;">
+<table cellspacing=""0"" bgcolor="#eef3f7" class='border1'>
+			<thead>
+			<tr>
+			<th class='mainHeader' colspan="14">PREFERENCE SCALING</td>
+			</tr>
+			</thead>
+			<tr class=norm>
+			<th width="20" align="center">&nbsp;</th>
+			<th width="20" align="center">0</th>
+			<th width="20" align="center">1</th>
+			<th width="20" align="center">2</th>
+			<th width="20" align="center">3</th>
+			<th width="20" align="center">4</th>
+			<th width="20" align="center">5</th>
+			<th width="20" align="center">&nbsp;</th>
+			<th width="20" align="center">0</th>
+			<th width="20" align="center">1</th>
+			<th width="20" align="center">2</th>
+			<th width="20" align="center">3</th>
+			<th width="20" align="center">4</th>
+			<th width="20" align="center">5</th>
+			</tr>
+			<tr class=norm>
+			<td>CP</td>
+			<td align="center"><input type="Radio" name="ratc" value="0" ></td>
+			<td align="center"><input type="Radio" name="ratc" value="1" ></td>
+			<td align="center"><input type="Radio" name="ratc" value="2" ></td>
+			<td align="center"><input type="Radio" name="ratc" value="3" checked></td>
+			<td align="center"><input type="Radio" name="ratc" value="4" ></td>
+			<td align="center"><input type="Radio" name="ratc" value="5" ></td>
+			<td>CF</td>
+			<td align="center"><input type="Radio" name="ratr" value="0" ></td>
+			<td align="center"><input type="Radio" name="ratr" value="1" ></td>
+			<td align="center"><input type="Radio" name="ratr" value="2" ></td>
+			<td align="center"><input type="Radio" name="ratr" value="3" checked></td>
+			<td align="center"><input type="Radio" name="ratr" value="4" ></td>
+			<td align="center"><input type="Radio" name="ratr" value="5" ></td>
+			</tr>
+			<tr class=norm>
+			<td>Tim</td>
+			<td align="center"><input type="Radio" name="ratd" value="0" ></td>
+			<td align="center"><input type="Radio" name="ratd" value="1" ></td>
+			<td align="center"><input type="Radio" name="ratd" value="2" ></td>
+			<td align="center"><input type="Radio" name="ratd" value="3" checked></td>
+			<td align="center"><input type="Radio" name="ratd" value="4" ></td>
+			<td align="center"><input type="Radio" name="ratd" value="5" ></td>
+			<td>JA</td>
+			<td align="center"><input type="Radio" name="jock" value="0" ></td>
+			<td align="center"><input type="Radio" name="jock" value="1" ></td>
+			<td align="center"><input type="Radio" name="jock" value="2" ></td>
+			<td align="center"><input type="Radio" name="jock" value="3" checked></td>
+			<td align="center"><input type="Radio" name="jock" value="4" ></td>
+			<td align="center"><input type="Radio" name="jock" value="5" ></td>
+			</tr>
+			<tr class=norm>
+			<td>TA</td>
+			<td align="center"><input type="Radio" name="train" value="0" ></td>
+			<td align="center"><input type="Radio" name="train" value="1" ></td>
+			<td align="center"><input type="Radio" name="train" value="2" ></td>
+			<td align="center"><input type="Radio" name="train" value="3" checked></td>
+			<td align="center"><input type="Radio" name="train" value="4" ></td>
+			<td align="center"><input type="Radio" name="train" value="5" ></td>
+			<td>JT</td>
+			<td align="center"><input type="Radio" name="jt" value="0" ></td>
+			<td align="center"><input type="Radio" name="jt" value="1" ></td>
+			<td align="center"><input type="Radio" name="jt" value="2" ></td>
+			<td align="center"><input type="Radio" name="jt" value="3" checked></td>
+			<td align="center"><input type="Radio" name="jt" value="4" ></td>
+			<td align="center"><input type="Radio" name="jt" value="5" ></td>
+			</tr>
+			<tr class=norm>
+			<td>BP</td>
+			<td align="center"><input type="Radio" name="bp" value="0" ></td>
+			<td align="center"><input type="Radio" name="bp" value="1" ></td>
+			<td align="center"><input type="Radio" name="bp" value="2" ></td>
+			<td align="center"><input type="Radio" name="bp" value="3" checked></td>
+			<td align="center"><input type="Radio" name="bp" value="4" ></td>
+			<td align="center"><input type="Radio" name="bp" value="5" ></td>
+			<td>WET</td>
+			<td align="center"><input type="Radio" name="wet" value="0" checked></td>
+			<td align="center"><input type="Radio" name="wet" value="1" ></td>
+			<td align="center"><input type="Radio" name="wet" value="2" ></td>
+			<td align="center"><input type="Radio" name="wet" value="3" ></td>
+			<td align="center"><input type="Radio" name="wet" value="4" ></td>
+			<td align="center"><input type="Radio" name="wet" value="5" ></td>
+			</tr>
+			<tr class=norm>
+			<td>Crs</td>
+			<td align="center"><input type="Radio" name="crs" value="0" ></td>
+			<td align="center"><input type="Radio" name="crs" value="1" ></td>
+			<td align="center"><input type="Radio" name="crs" value="2" ></td>
+			<td align="center"><input type="Radio" name="crs" value="3" checked></td>
+			<td align="center"><input type="Radio" name="crs" value="4" ></td>
+			<td align="center"><input type="Radio" name="crs" value="5" ></td>
+			<td>Dist</td>
+			<td align="center"><input type="Radio" name="dist" value="0" ></td>
+			<td align="center"><input type="Radio" name="dist" value="1" ></td>
+			<td align="center"><input type="Radio" name="dist" value="2" ></td>
+			<td align="center"><input type="Radio" name="dist" value="3" checked></td>
+			<td align="center"><input type="Radio" name="dist" value="4" ></td>
+			<td align="center"><input type="Radio" name="dist" value="5" ></td>
+			</tr>
+			<tr class=norm>
+			<td>$</td>
+			<td align="center"><input type="Radio" name="pm" value="0" ></td>
+			<td align="center"><input type="Radio" name="pm" value="1" ></td>
+			<td align="center"><input type="Radio" name="pm" value="2" ></td>
+			<td align="center"><input type="Radio" name="pm" value="3" checked></td>
+			<td align="center"><input type="Radio" name="pm" value="4" ></td>
+			<td align="center"><input type="Radio" name="pm" value="5" ></td>
+			<td>DLR</td>
+			<td align="center"><input type="Radio" name="dlr" value="0" ></td>
+			<td align="center"><input type="Radio" name="dlr" value="1" ></td>
+			<td align="center"><input type="Radio" name="dlr" value="2" ></td>
+			<td align="center"><input type="Radio" name="dlr" value="3" checked></td>
+			<td align="center"><input type="Radio" name="dlr" value="4" ></td>
+			<td align="center"><input type="Radio" name="dlr" value="5" ></td>
+			</tr>
+			<!--
+			<tr class=norm>
+			<td>PR</td>
+			<td align="center"><input type="Radio" name="pr" value="0" disabled ></td>
+			<td align="center"><input type="Radio" name="pr" value="1" ></td>
+			<td align="center"><input type="Radio" name="pr" value="2" ></td>
+			<td align="center"><input type="Radio" name="pr" value="3" ></td>
+			<td align="center"><input type="Radio" name="pr" value="4" ></td>
+			<td align="center"><input type="Radio" name="pr" value="5" ></td>
+			<td colspan="7">
+			</tr>
+			-->
+			<tr class=norm>
+			<td colspan="14">Price <select name="nrrunners" class="inputtext">
+				<option value="">All</option>
+				<option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+			</select>
+			runners to a market of <input type="Text" class="inputtext" size="3" name="marketPercentage" value="114">%</td>
+			</tr>
+			<tr><td colspan="14" align="center">
+				<input class='nfbutton' type="submit" name="submit" value="Submit" onClick="javascript:document.form1.target='_self';">
+				<input class='nfbutton' type="Button" value="Cancel" onClick="javascript:hidediv('scaling');">
+				<div style="float:right"><input class='nfbutton' type="Button" value="Reset" onClick="javascript:resetFrom();"></div>
+				<script language="javascript">
+					function resetFrom(){
+						document.form1.pr[3].checked = true;
+						document.form1.dlr[3].checked = true;
+						document.form1.pm[3].checked = true;
+						document.form1.dist[3].checked = true;
+						document.form1.crs[3].checked = true;
+						document.form1.wet[0].checked = true;
+						document.form1.bp[3].checked = true;
+						document.form1.jt[3].checked = true;
+						document.form1.train[3].checked = true;
+						document.form1.jock[3].checked = true;
+						document.form1.ratd[3].checked = true;
+						document.form1.ratr[3].checked = true;
+						document.form1.ratc[3].checked = true;
+					}
+				</script>
+			</td></tr>
+			</table>
+		</div>
+	<table width="100%" cellspacing="0" class='border1'><thead><tr><th class='mainHeader' width="1%">INC</th><th class='mainHeader' width="1%"><a href="" onclick="this.blur(); return sortTable('offTblBdy', 1, false);" title="Tab">TAB</a></th><th class='mainHeader'><a href="" onclick="this.blur(); return sortTable('offTblBdy', 2, false);" title="Horse">HORSE</a></th><th class='mainHeader' width="24%"><div name="JockeyCol">JOCKEY | <a href="javascript: void(0);" onclick="javascript:SwitchJockeyTrainer(0);" title="Trainer" style="color:#7FBBEC">TRAINER</a></div><div name="TrainerCol" style="visibility:hidden;display:none;"><a href="javascript: void(0);" onclick="javascript:SwitchJockeyTrainer(1);" title="Trainer" style="color:#7FBBEC">JOCKEY</a> | TRAINER</div></th><th class='mainHeader' width="6%"><a href="" onclick="this.blur(); return sortTable('offTblBdy', 4, false);" title="Weight">WT</a></th><th class='mainHeader' width="10%"><a href="" onclick="this.blur(); return sortTable('offTblBdy', 5, false);" title="NR">NR</a></th><th class='mainHeader' width="10%"><a href="" onclick="this.blur(); return sortTable('offTblBdy', 6, false);" title="HCP">HCP</a></th><th class='mainHeader' width="10%"><a href="" onclick="this.blur(); return sortTable('offTblBdy', 7, false);" title="PR">PR</a></th><th class='mainHeader' style="display:none;">SCR</th><th class='mainHeader' width="7%"><a href="" onclick="this.blur(); return sortTable('offTblBdy', 9, false);" title="BP">BP</a></th></tr></thead><tbody id="offTblBdy"><tr class="alternateRow"><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc1" checked onclick="this.blur(); return scratchHorse('offTblBdy', 1, this.checked);"></td><td class="numeric" align="right">1&nbsp;</td><td>&nbsp;Arkadashim&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=741798','a0');" href="worksheet_display.asp?type=last5&horid=741798" target="_blank" id="a0" name="a0" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Chantal Willis</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;W N Mcshane</div></td><td>&nbsp;59.0</td><td class="numeric" align="right">156.0&nbsp;</td><td><input type="text" class='inputtext' name="hcp1" size="5" value=""></td><td class="numeric" align="right">$4.80&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">5&nbsp;</td></tr><tr><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc2" checked onclick="this.blur(); return scratchHorse('offTblBdy', 2, this.checked);"></td><td class="numeric" align="right">2&nbsp;</td><td>&nbsp;Known About Town&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=672254','a1');" href="worksheet_display.asp?type=last5&horid=672254" target="_blank" id="a1" name="a1" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Brendon Mc Coull</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Troy Blacker</div></td><td>&nbsp;59.0</td><td class="numeric" align="right">142.5&nbsp;</td><td><input type="text" class='inputtext' name="hcp2" size="5" value=""></td><td class="numeric" align="right">$6.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">9&nbsp;</td></tr><tr class="alternateRow"><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc3" checked onclick="this.blur(); return scratchHorse('offTblBdy', 3, this.checked);"></td><td class="numeric" align="right">3&nbsp;</td><td>&nbsp;Give Me A Tip&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=683286','a2');" href="worksheet_display.asp?type=last5&horid=683286" target="_blank" id="a2" name="a2" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Grant Challinger</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Glenn Stevenson</div></td><td>&nbsp;57.0</td><td class="numeric" align="right">67.5&nbsp;</td><td><input type="text" class='inputtext' name="hcp3" size="5" value=""></td><td class="numeric" align="right">$31.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">8&nbsp;</td></tr><tr><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc4" checked onclick="this.blur(); return scratchHorse('offTblBdy', 4, this.checked);"></td><td class="numeric" align="right">4&nbsp;</td><td>&nbsp;Shezastig&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=708320','a3');" href="worksheet_display.asp?type=last5&horid=708320" target="_blank" id="a3" name="a3" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Anthony Darmanin</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Dylan Clark</div></td><td>&nbsp;57.0</td><td class="numeric" align="right">103.0&nbsp;</td><td><input type="text" class='inputtext' name="hcp4" size="5" value=""></td><td class="numeric" align="right">$9.50&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">1&nbsp;</td></tr><tr class="alternateRow"><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc5" checked onclick="this.blur(); return scratchHorse('offTblBdy', 5, this.checked);"></td><td class="numeric" align="right">5&nbsp;</td><td>&nbsp;Strictly Romance&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=612383','a4');" href="worksheet_display.asp?type=last5&horid=612383" target="_blank" id="a4" name="a4" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Jamie R Bayliss</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Royston Carr</div></td><td>&nbsp;57.0</td><td class="numeric" align="right">79.5&nbsp;</td><td><input type="text" class='inputtext' name="hcp5" size="5" value=""></td><td class="numeric" align="right">$21.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">2&nbsp;</td></tr><tr><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc6" checked onclick="this.blur(); return scratchHorse('offTblBdy', 6, this.checked);"></td><td class="numeric" align="right">6&nbsp;</td><td>&nbsp;Victory Medal&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=710322','a5');" href="worksheet_display.asp?type=last5&horid=710322" target="_blank" id="a5" name="a5" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Ms R Cross</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Rhonda Hall</div></td><td>&nbsp;57.0</td><td class="numeric" align="right">90.0&nbsp;</td><td><input type="text" class='inputtext' name="hcp6" size="5" value=""></td><td class="numeric" align="right">$16.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">6&nbsp;</td></tr><tr class="alternateRow"><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc7" onclick="this.blur(); return scratchHorse('offTblBdy', 7, this.checked);"></td><td class="numeric" align="right" style="color:#cccccc;">7&nbsp;</td><td style="color:#cccccc;">&nbsp;Anytime Soon&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=866250','a6');" href="worksheet_display.asp?type=last5&horid=866250" target="_blank" id="a6" name="a6" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td style="color:#cccccc;"><div name="JockeyCol">&nbsp;Mehmet Ulucinar</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Adam Trinder</div></td><td style="color:#cccccc;">&nbsp;56.5</td><td class="numeric" align="right" style="color:#cccccc;">0.0&nbsp;</td><td style="color:#cccccc;"><input type="text" class='inputtext' name="hcp7" size="5" value=""></td><td class="numeric" style="color:#cccccc;" align="right">&nbsp;</td><td class="numeric" style="display:none;">1</td><td class="numeric" align="right" style="color:#cccccc;">-&nbsp;</td></tr><tr><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc8" checked onclick="this.blur(); return scratchHorse('offTblBdy', 8, this.checked);"></td><td class="numeric" align="right">8&nbsp;</td><td>&nbsp;Incumsdacash&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=861240','a7');" href="worksheet_display.asp?type=last5&horid=861240" target="_blank" id="a7" name="a7" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Corey Parish</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Leanne & Clinton Gaffney</div></td><td>&nbsp;56.5</td><td class="numeric" align="right">98.0&nbsp;</td><td><input type="text" class='inputtext' name="hcp8" size="5" value=""></td><td class="numeric" align="right">$13.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">11&nbsp;</td></tr><tr class="alternateRow"><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc9" checked onclick="this.blur(); return scratchHorse('offTblBdy', 9, this.checked);"></td><td class="numeric" align="right">9&nbsp;</td><td>&nbsp;Shayana&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=737266','a8');" href="worksheet_display.asp?type=last5&horid=737266" target="_blank" id="a8" name="a8" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;David Pires</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;John Blacker</div></td><td>&nbsp;56.5</td><td class="numeric" align="right">181.0&nbsp;</td><td><input type="text" class='inputtext' name="hcp9" size="5" value=""></td><td class="numeric" align="right">$3.50&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">10&nbsp;</td></tr><tr><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc10" checked onclick="this.blur(); return scratchHorse('offTblBdy', 10, this.checked);"></td><td class="numeric" align="right">10&nbsp;</td><td>&nbsp;Eternal Dream&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=733706','a9');" href="worksheet_display.asp?type=last5&horid=733706" target="_blank" id="a9" name="a9" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Ismail Toker</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Gary White</div></td><td>&nbsp;55.0</td><td class="numeric" align="right">101.5&nbsp;</td><td><input type="text" class='inputtext' name="hcp10" size="5" value=""></td><td class="numeric" align="right">$11.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">4&nbsp;</td></tr><tr class="alternateRow"><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc11" checked onclick="this.blur(); return scratchHorse('offTblBdy', 11, this.checked);"></td><td class="numeric" align="right">11&nbsp;</td><td>&nbsp;Bachelor Fever&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=879945','a10');" href="worksheet_display.asp?type=last5&horid=879945" target="_blank" id="a10" name="a10" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Shuji Amano</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Christie Burt</div></td><td>&nbsp;54.5</td><td class="numeric" align="right">58.5&nbsp;</td><td><input type="text" class='inputtext' name="hcp11" size="5" value=""></td><td class="numeric" align="right">$51.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">7&nbsp;</td></tr><tr><td><input type="Checkbox" style="padding: 0px; margin: 0px;height: 8px;" name="inc12" checked onclick="this.blur(); return scratchHorse('offTblBdy', 12, this.checked);"></td><td class="numeric" align="right">12&nbsp;</td><td>&nbsp;What A Night&nbsp;<a onMouseOut="close_Form();" onMouseOver="open_Form('worksheet_display.asp?type=last5&horid=897668','a11');" href="worksheet_display.asp?type=last5&horid=897668" target="_blank" id="a11" name="a11" class="nf"><img src="http://www.racingandsports.com.au/featureform/images/button_info.gif" border="0" /></a></td><td><div name="JockeyCol">&nbsp;Sherry Barr</div><div name="TrainerCol" style="visibility:hidden;display:none;">&nbsp;Terence Evans</div></td><td>&nbsp;54.5</td><td class="numeric" align="right">71.5&nbsp;</td><td><input type="text" class='inputtext' name="hcp12" size="5" value=""></td><td class="numeric" align="right">$26.00&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td></tr></tbody></table><table width="100%"><tr><td><a class='nf' href="javascript:showdiv('scaling');">[Set Preference Scaling]</a><br></td><td align="right"><input class='nfbutton' type="submit" name="submit" value="Submit" onclick="javascript:document.form1.target='_self';"> <input class='nfbutton' type="submit" name="print" value="Print" onclick="javascript:document.form1.target='_new';"> <input class='nfbutton' type="submit" name="csv" value="CSV" onclick="javascript:document.form1.target='_new';"></td></tr></table><br><table width="100%" cellspacing="0" class='border1'><thead><tr><th class='mainHeader' width="1%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 0, false);" title="TAB">TAB</a></th><th class='mainHeader'><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 1, false);" title="HORSE">HORSE</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 2, false);" title="NR">NR</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 3, false);" title="HCP">HCP</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 4, false);" title="CP">CP</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 5, false);" title="CF">CF</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 6, false);" title="TIM">TIM</a></th><th class='mainHeader' style="display:none;">SCR</th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 8, false);" title="JA">JA</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 9, false);" title="TA">TA</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 10, false);" title="JT">JT</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 11, false);" title="BP">BP</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 12, false);" title="WT">WET</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 13, false);" title="CRS">CRS</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 14, false);" title="D">D</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 15, false);" title="$">$</a></th><th class='mainHeader' width="5%"><a href="" onclick="this.blur(); return sortTable('offTblBdy2', 16, false);" title="DLR">DLR</a></th></tr></thead><tbody id="offTblBdy2"><tr class="alternateRow"><td class="numeric" align="right">1&nbsp;</td><td>&nbsp;Arkadashim</td><td class="numeric" align="right">156.0&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">12&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">57&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">16&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">11&nbsp;</td><td class="numeric" align="right">14&nbsp;</td></tr><tr><td class="numeric" align="right">2&nbsp;</td><td>&nbsp;Known About Town</td><td class="numeric" align="right">142.5&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">12&nbsp;</td><td class="numeric" align="right">31&nbsp;</td><td class="numeric" align="right">9&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">23&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" align="right">9&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">6&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">17&nbsp;</td></tr><tr class="alternateRow"><td class="numeric" align="right">3&nbsp;</td><td>&nbsp;Give Me A Tip</td><td class="numeric" align="right">67.5&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" align="right">2&nbsp;</td><td class="numeric" align="right">7&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" align="right">12&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">4&nbsp;</td><td class="numeric" align="right">7&nbsp;</td><td class="numeric" align="right">4&nbsp;</td><td class="numeric" align="right">18&nbsp;</td></tr><tr><td class="numeric" align="right">4&nbsp;</td><td>&nbsp;Shezastig</td><td class="numeric" align="right">103.0&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">4&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">9&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">23&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">16&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">7&nbsp;</td><td class="numeric" align="right">6&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">18&nbsp;</td></tr><tr class="alternateRow"><td class="numeric" align="right">5&nbsp;</td><td>&nbsp;Strictly Romance</td><td class="numeric" align="right">79.5&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">4&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">14&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">11&nbsp;</td><td class="numeric" align="right">14&nbsp;</td></tr><tr><td class="numeric" align="right">6&nbsp;</td><td>&nbsp;Victory Medal</td><td class="numeric" align="right">90.0&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">12&nbsp;</td><td class="numeric" align="right">2&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">15&nbsp;</td><td class="numeric" align="right">11&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">14&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">10&nbsp;</td></tr><tr class="alternateRow"><td class="numeric" align="right" style="color:#cccccc;">7&nbsp;</td><td style="color:#cccccc;">&nbsp;Anytime Soon</td><td class="numeric" align="right" style="color:#cccccc;">0.0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" style="display:none;">1</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td><td class="numeric" align="right" style="color:#cccccc;">0&nbsp;</td></tr><tr><td class="numeric" align="right">8&nbsp;</td><td>&nbsp;Incumsdacash</td><td class="numeric" align="right">98.0&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">22&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">15&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">9&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">2&nbsp;</td><td class="numeric" align="right">17&nbsp;</td></tr><tr class="alternateRow"><td class="numeric" align="right">9&nbsp;</td><td>&nbsp;Shayana</td><td class="numeric" align="right">181.0&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">33&nbsp;</td><td class="numeric" align="right">42&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">18&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">7&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">15&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">19&nbsp;</td><td class="numeric" align="right">17&nbsp;</td></tr><tr><td class="numeric" align="right">10&nbsp;</td><td>&nbsp;Eternal Dream</td><td class="numeric" align="right">101.5&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" align="right">6&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">18&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">16&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">9&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">5&nbsp;</td><td class="numeric" align="right">17&nbsp;</td></tr><tr class="alternateRow"><td class="numeric" align="right">11&nbsp;</td><td>&nbsp;Bachelor Fever</td><td class="numeric" align="right">58.5&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">2&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" align="right">18&nbsp;</td></tr><tr><td class="numeric" align="right">12&nbsp;</td><td>&nbsp;What A Night</td><td class="numeric" align="right">71.5&nbsp;</td><td class="numeric" align="right">&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" style="display:none;">0</td><td class="numeric" align="right">3&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">8&nbsp;</td><td class="numeric" align="right">13&nbsp;</td><td class="numeric" align="right">0&nbsp;</td><td class="numeric" align="right">9&nbsp;</td><td class="numeric" align="right">10&nbsp;</td><td class="numeric" align="right">1&nbsp;</td><td class="numeric" align="right">14&nbsp;</td></tr></tbody></table>
+			</form>
+			
+			<div class='exp'>The numbers shown in each individual column are integer value of actual number. 
+			Them may not add up to the exact NR value.</div>
+			
+			<script type="text/javascript">
+				sortTable('offTblBdy', 4, true);
+				sortTable('offTblBdy2', 2, true);
+			</script>
+			
+			<script language="javascript">
+				function include(xUrl,xId) {
+					
+						  var xmlhttp = false;
+						
+						  if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+							xmlhttp = new XMLHttpRequest();
+						  }
+						
+						  xmlhttp.open("GET", xUrl,true);
+						  xmlhttp.onreadystatechange=function() {
+						
+								  if (xmlhttp.readyState==4) {
+										
+											parent.document.getElementById(xId).innerHTML = xmlhttp.responseText;
+										
+								  }
+						  }
+						  xmlhttp.send(null)
+						
+						}
+						
+						function close_Form() {
+							
+								parent.document.getElementById('horseForm').innerHTML = '';
+								parent.document.getElementById('horseForm').style.display = 'none';
+							
+							
+						}
+						
+						function open_Form(horseID, linkID) {
+							
+							var objLink = document.getElementById(linkID);
+							var coors = findPos(objLink);
+							
+							
+								var objDisplay = parent.document.getElementById('horseForm');
+							
+							objDisplay.style.display = 'block';
+							objDisplay.style.top=coors[1]+305+'px';
+							objDisplay.style.left=coors[0]+20+'px';
+							
+							objDisplay.innerHTML = '<table width="100%" border="0" cellpadding="0" cellspacing="0" class="tablerhsGreen"><tr><th>Loading Horse Form...</th><tr><td class="normtext">Loading...</td></tr></table>';
+							
+								include(horseID,"horseForm");
+							
+						}
+						
+						
+						function findPos(obj)
+						{
+							var curleft = curtop = 0;
+							if (obj.offsetParent) {
+								curleft = obj.offsetLeft
+								curtop = obj.offsetTop
+								while (obj = obj.offsetParent) {
+									curleft += obj.offsetLeft
+									curtop += obj.offsetTop
+								}
+							}
+							
+							var thisFrame = parent.document.getElementById('frameneural');
+							//alert(curleft + ":"	 + curtop);
+							if (thisFrame != null && thisFrame.offsetParent) {
+								while (thisFrame = thisFrame.offsetParent) {
+									curleft += thisFrame.offsetLeft
+									curtop += thisFrame.offsetTop
+								}
+							}			
+							return [curleft,curtop];
+						}
+						function SwitchJockeyTrainer(n){
+							var ToShowCols;
+							var ToHideCols;
+							
+							if(n==0){
+								ToShowCols = document.getElementsByName('TrainerCol');
+								ToHideCols = document.getElementsByName('JockeyCol');
+								if(ToShowCols.length == 0){
+									ToShowCols = getElementsByName_iefix('div','TrainerCol');
+									ToHideCols = getElementsByName_iefix('div','JockeyCol');
+								}
+							}else{
+								ToShowCols = document.getElementsByName('JockeyCol');
+								ToHideCols = document.getElementsByName('TrainerCol');
+								if(ToShowCols.length == 0){
+									ToShowCols = getElementsByName_iefix('div','JockeyCol');
+									ToHideCols = getElementsByName_iefix('div','TrainerCol');
+								}
+							}
+							
+							for(var x=0; x < ToShowCols.length; x++){
+								var showCol = ToShowCols[x];
+								var hideCol = ToHideCols[x];
+								showCol.style.visibility = 'visible';
+								showCol.style.display = 'block';
+								hideCol.style.visibility = 'hidden';
+								hideCol.style.display = 'none';
+							}
+						}
+						/***
+						Ke, 28/05/2010
+						According to the HTML 4.01 spec, the only elements that support NAME attributes are BUTTON, TEXTAREA, APPLET, SELECT, FORM, FRAME, IFRAME, IMG, A, INPUT, OBJECT, MAP, PARAM and META. So to place a NAME inside a DIV is actually invalid HTML.
+						****/
+						function getElementsByName_iefix(tag, name) {
+							 var elem = document.getElementsByTagName(tag);
+							 var arr = new Array();
+							 for(i = 0,iarr = 0; i < elem.length; i++) {
+								  att = elem[i].getAttribute("name");
+								  if(att == name) {
+									   arr[iarr] = elem[i];
+									   iarr++;
+								  }
+							 }
+							 return arr;
+						}
+						
+			</script>
+			<div id="horseFormSelf" name="horseFormSelf" style="z-index: 100; position: absolute; width:470px; background-color:#FFFFFF"></div>
+		</body>
+		</html>
