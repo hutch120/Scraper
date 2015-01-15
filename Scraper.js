@@ -19,11 +19,7 @@ function Scraper() {
 
 	// Clean reference to private class variables.
 	var _ = this;
-
-	// true: parse test data, false: parse online data.
-	var testing;
-	_.testing = true;
-
+	
 	// Set program options.
 	var opts;
 	_.opts = opts = {};
@@ -33,7 +29,7 @@ function Scraper() {
 	_.meetings = meetings = {};
 	
 	var raceIDs;
-	_.raceIDs = raceIDs;
+	_.raceIDs = raceIDs = {};
 	
 	// Races data object.
 	var races;
@@ -53,8 +49,11 @@ function Scraper() {
 
 		_.optsLive = {};
 		_.optsTest = {};
-
-		// URLs to scrape
+		
+		// true: parse test data, false: parse online data.
+		_.optsTest.testingMode = true;
+		
+		// Set testing options
 		_.optsTest.FullResultsURL = 'http://localhost/fullresults.html';
 		_.optsTest.NeuralURL = 'http://localhost/neuraltest.html?raceid=';
 		_.optsTest.ResultsURL = 'http://localhost/resultstest.html?raceid=';
@@ -62,24 +61,27 @@ function Scraper() {
 		_.optsTest.ElasticSearchIndex = 'localhost';
 		_.optsTest.ElasticSearchType = 'neural';
 
+		// Set live options
 		_.optsLive.FullResultsURL = 'SEE LINKS';
 		_.optsLive.NeuralURL = 'SEE LINKS';
 		_.optsLive.ResultsURL = 'SEE LINKS';
+
+		
 		_.optsLive.ElasticSearchHost = _.optsTest.ElasticSearchHost;
 		_.optsLive.ElasticSearchIndex = _.optsTest.ElasticSearchIndex;
 		_.optsLive.ElasticSearchType = _.optsTest.ElasticSearchType;
 
-		_.esclient = new elasticsearch.Client({
-				host : _.optsLive.ElasticSearchHost,
-				log : 'warning'
-			});
-
-		if (_.testing) {
+		if (_.optsTest.testingMode) {
 			_.opts = _.optsTest;
 		} else {
 			_.opts = _.optsLive;
 		}
 
+		_.esclient = new elasticsearch.Client({
+			host : _.opts.ElasticSearchHost,
+			log : 'warning'
+		});
+		
 	}
 
 	/**
@@ -89,13 +91,6 @@ function Scraper() {
 	 * @public
 	 */
 	_.run = function () {
-
-		_.raceIDs = {
-			'547374' : '',
-			'547375' : ''
-		};
-
-		debugObject('raceIDs', _.raceIDs);
 
 		var getMeetingDataPromise = [];
 		var getRaceIDsDataPromise = [];
@@ -109,25 +104,28 @@ function Scraper() {
 		Promise.all(getMeetingDataPromise).then(function () {
 
 			for (var key in _.meetings) {
-				url = _.optsTest.FullResultsURL + _.meetings[key];
+				url = _.opts.FullResultsURL + _.meetings[key];
 				//debug('url: ' + url);
 				getRaceIDsDataPromise.push(_.getDataPromise(url, 0, _.parseRaceIDsData));
 			}
 			
 			Promise.all(getRaceIDsDataPromise).then(function () {
-			
+
+				debugObject('raceIDs', _.raceIDs);
+				
 				for (raceID in _.raceIDs) {
 
 					_.races[raceID] = {};
 					_.races[raceID].raceID = raceID;
 
-					_.races[raceID].data = {};
+					_.races[raceID].data = {horses: []};
 					url = '' + _.opts.NeuralURL + raceID + '';
 					getWebSiteDataPromise.push(_.getDataPromise(url, raceID, _.parseNeuralData));
 
-					_.races[raceID].results = {};
+					_.races[raceID].results = {horses: []};
 					url = '' + _.opts.ResultsURL + raceID + '';
 					getWebSiteDataPromise.push(_.getDataPromise(url, raceID, _.parseResultsData));
+					
 				}
 
 				Promise.all(getWebSiteDataPromise).then(function () {
@@ -203,25 +201,32 @@ function Scraper() {
 	 * @private
 	 */
 	_.parseRaceIDsData = function (data, id) {
-		debug('Parse raceids data TODO: WORKING HERE....');
 		
-		/*
 		var headers = {};
 
 		var html = cheerio.load(data);
 	
-		var list = cheerio.load(html('.raceheader table tbody .nf').html());
-
-		debug(list);*/
+		//var list = cheerio.load(html('.nf').html());
 		
-		/*
-		list('a').each(function (i, element) {
-			var a = list(this);
+		html('a').each(function (i, element) {
+			//console.log(element);
+			var a = html(this);
 			var queryObject = urljs.parse(a.attr('href'));
-			//console.log(queryObject);
+			
+			var path = queryObject.path + '';
+			// displayResults('548797','results');displayAAPResults('548797','aapresults');
+			
+			if ( path.indexOf('displayResults') > -1) {
+				//debug(queryObject.path);
+				path = path.substr(path.indexOf('\'')+1, 10);
+				path = path.substr(0, path.indexOf('\''));
+				//console.log(path);
+				_.raceIDs[path] = '';
+			}
+			
 			//debug(i + ': ' + queryObject.query);
-			_.meetings[i+1] = queryObject.search;
-		});*/
+			//_.meetings[i+1] = queryObject.search;
+		});
 
 		//debugObject('meetings', _.meetings);
 	}		
@@ -261,15 +266,20 @@ function Scraper() {
 
 		table('tbody tr').each(function (i, element) {
 			var a = table(this);
-			_.races[raceID].data[i + 1] = {};
+			//_.races[raceID].data[i + 1] = {};
+
+			var obj = {};
 
 			a.find('td').each(function (j, element) {
 				var b = table(this);
 				//debug(i + ': ' + b.text());
 				//debug('headers[i]: ' + headers[i]);
-
-				_.races[raceID].data[i + 1][headers[j]] = b.text().trim();
+				obj[headers[j]] = b.text().trim();
 			});
+			
+			if ( !objIsEmpty(obj) ) {
+				_.races[raceID].data.horses.push(obj);
+			}
 		});
 	}
 
@@ -286,7 +296,6 @@ function Scraper() {
 		var html = cheerio.load(data);
 		var table = cheerio.load(html('table .normbold').parent().html());
 		var skipRow = false;
-		var rowIndex = 0;
 
 		table('tr').each(function (row, element) {
 			var a = table(this);
@@ -296,10 +305,10 @@ function Scraper() {
 			} else {
 				//debug('row: ' + a.text().trim()	);
 				skipRow = false;
-				_.races[raceID].results[rowIndex] = {};
-
 			}
 
+			var obj = {};
+			
 			a.find('td').each(function (col, element) {
 				var tablecell = table(this);
 
@@ -312,15 +321,13 @@ function Scraper() {
 						skipRow = true;
 					} else {
 						//debug('rowIndex ' + rowIndex + ' col ' + col + ' text ' + tablecell.text().trim() + ' headers[col]: ' + headers[col]);
-						_.races[raceID].results[rowIndex][headers[col]] = tablecell.text().trim()
-
+						obj[headers[col]] = tablecell.text().trim();
 					}
 				}
 			});
 
-			if (!skipRow) {
-				rowIndex = rowIndex + 1;
-				//debug('increment rowIndex to ' + rowIndex);
+			if (!skipRow && !objIsEmpty(obj)) {
+				_.races[raceID].results.horses.push(obj);
 			}
 		});
 
@@ -338,15 +345,18 @@ function Scraper() {
 	_.insertRacePromise = function (raceID) {
 		debug('Insert Race Data for ID: ' + raceID);
 	
-		// Insert place into data for easier retrieval.
-		for (var key in _.races[raceID].results) {
+		// For simpler lookup insert FP (Finish Position) into the data.
+		for (var horseResultsKey in _.races[raceID].results.horses) {
+			var tab = _.races[raceID].results.horses[horseResultsKey].TAB;
+			var fp = _.races[raceID].results.horses[horseResultsKey].FP;
 
-			var tab = _.races[raceID].results[key].TAB;
-			var fp = _.races[raceID].results[key].FP;
-			//debug('tab: ' + tab);
-			_.races[raceID].data[tab]['FP'] = fp;
+			for (var horseDataKey in _.races[raceID].data.horses) {
+				if ( tab == _.races[raceID].data.horses[horseDataKey].TAB ) {
+					_.races[raceID].data.horses[horseDataKey].FP = fp;
+				}
+			}
 		}
-
+	
 		// return promise.
 		return _.esclient.index({
 			index : _.opts.ElasticSearchIndex,
@@ -387,4 +397,13 @@ function debugNoNewline(msg) {
 // For request promise handling.
 function clientError(e) {
 	return e.code >= 400 && e.code < 500;
+}
+
+function objIsEmpty(obj) {
+    for(var prop in obj) {
+        if(obj.hasOwnProperty(prop))
+            return false;
+    }
+
+    return true;
 }
