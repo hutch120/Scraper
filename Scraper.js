@@ -261,7 +261,8 @@ function Scraper() {
 	 *  TA - Trainer ability algorithm
 	 *  JT - Jockey/trainer combination algorithm
 	 *  WT - Wet track performance algorithmCrs - Course suitability algorithm
-	 *  D - Distance suitability algorithm$ - Prizemoney earned algorithm
+	 *  D - Distance suitability algorithm
+	 *  $ - Prizemoney earned algorithm
 	 *  BP - Barrier position (course & distance) algorithm
 	 *  DLR - days since last run algorithm
 	 *
