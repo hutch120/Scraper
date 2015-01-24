@@ -97,10 +97,19 @@ function ESCSVDump() {
 			debug('Retreived all records.')
 			
 			
+			var races = {};
+			races.totalRaces = 0;
+			races.pickedWinner = 0;
+			races.pickedPlace = 0;
 			
 			for (var key in response.hits.hits) {
 			
-				debug('RaceID: ' + response.hits.hits[key]['_source'].raceID);
+				var race = {};
+				race.raceID = response.hits.hits[key]['_source'].raceID;
+				debug('RaceID: ' + race.raceID);
+				
+				race.maxNormalSum = 0;
+				race.horseCount = 0;
 				
 				//debug('key: ' + key);
 				//debugObject('response', response.hits.hits[key]['_source'].data.horses);
@@ -144,47 +153,106 @@ function ESCSVDump() {
 					horseAttributeTotal.$ += horseObj.$*1;
 					horseAttributeTotal.DLR += horseObj.DLR*1;
 					// Note FP is answer.
+					
+					race.horseCount++;
 				}
 				
 				//debugObject('horseAttributeTotal', horseAttributeTotal);
 				
-				for (var key2 in response.hits.hits[key]['_source'].data.horses) {
-					var horseArr = [];
-					var horseObj = response.hits.hits[key]['_source'].data.horses[key2];
-					horseArr.push(normalise(horseObj.NR, horseAttributeTotal.NR));
-					horseArr.push(normalise(horseObj.CP, horseAttributeTotal.CP));
-					//horseArr.push(normalise(horseObj.HCP, horseAttributeTotal.HCP));
-					horseArr.push(normalise(horseObj.CF, horseAttributeTotal.CF));
-					horseArr.push(normalise(horseObj.TIM, horseAttributeTotal.TIM));
-					//horseArr.push(normalise(horseObj.SCR, horseAttributeTotal.SCR));
-					horseArr.push(normalise(horseObj.JA, horseAttributeTotal.JA));
-					horseArr.push(normalise(horseObj.TA, horseAttributeTotal.TA));
-					horseArr.push(normalise(horseObj.JT, horseAttributeTotal.JT));
-					horseArr.push(normalise(horseObj.BP, horseAttributeTotal.BP));
-					//horseArr.push(normalise(horseObj.WET, horseAttributeTotal.WET));
-					horseArr.push(normalise(horseObj.CRS, horseAttributeTotal.CRS));
-					horseArr.push(normalise(horseObj.D, horseAttributeTotal.D));
-					horseArr.push(normalise(horseObj.$, horseAttributeTotal.$));
-					horseArr.push(normalise(horseObj.DLR, horseAttributeTotal.DLR));
-					
-					if ( horseObj.FP == 1 ) {
-						horseObj.FPText = 'WIN';
-					} else if ( horseObj.FP == 2 || horseObj.FP == 3 ) {
-						horseObj.FPText = 'PLACE';
-					} else {
-						horseObj.FPText = 'NONE';
-					}
-					horseArr.push(horseObj.FPText);
-					
-					// if ( horseObj.NR > 0  && horseObj.FP == 1 ) { // Only output WIN 
-					if ( horseObj.NR > 0 ) {
-						input.push(horseArr);
+				if ( race.horseCount >= 8 && race.horseCount <= 14 ) {
+				
+					debug('race.horseCount: ' + race.horseCount);
+				
+					for (var key2 in response.hits.hits[key]['_source'].data.horses) {
+											
+						var horseArr = [];
+						var horseObj = response.hits.hits[key]['_source'].data.horses[key2];
+											
+						var normalNR = normalise(horseObj.NR, horseAttributeTotal.NR);
+						var normalCP = normalise(horseObj.CP, horseAttributeTotal.CP);
+						//var normalHCP = normalise(horseObj.HCP, horseAttributeTotal.HCP);
+						var normalCF = normalise(horseObj.CF, horseAttributeTotal.CF);
+						var normalTIM = normalise(horseObj.TIM, horseAttributeTotal.TIM);
+						//var normalSCR = normalise(horseObj.SCR, horseAttributeTotal.SCR);
+						var normalJA = normalise(horseObj.JA, horseAttributeTotal.JA);
+						var normalTA = normalise(horseObj.TA, horseAttributeTotal.TA);
+						var normalJT = normalise(horseObj.JT, horseAttributeTotal.JT);
+						var normalBP = normalise(horseObj.BP, horseAttributeTotal.BP);
+						//var normalWET = normalise(horseObj.WET, horseAttributeTotal.WET);
+						var normalCRS = normalise(horseObj.CRS, horseAttributeTotal.CRS);
+						var normalD = normalise(horseObj.D, horseAttributeTotal.D);
+						var normal$ = normalise(horseObj.$, horseAttributeTotal.$);
+						var normalDLR = normalise(horseObj.DLR, horseAttributeTotal.DLR);
+						
+						var normalSum = normalNR + 
+							normalCP + 
+							// normalHCP
+							normalCF + 
+							normalTIM + 
+							// normalSCR
+							normalJA +
+							normalJT +
+							normalBP +
+							normalCRS +
+							normalD +
+							normal$ +
+							normalDLR;
+						
+						if ( race.maxNormalSum < normalSum ) {
+							race.maxNormalSum = normalSum;
+							race.maxNormalSumHorseFP = horseObj.FP;
+						}
+						
+						horseArr.push(race.raceID);
+						horseArr.push(normalNR);
+						horseArr.push(normalCP);
+						//horseArr.push(normalHCP));
+						horseArr.push(normalCF);
+						horseArr.push(normalTIM);
+						//horseArr.push(normalSCR));
+						horseArr.push(normalJA);
+						horseArr.push(normalTA);
+						horseArr.push(normalJT);
+						horseArr.push(normalBP);
+						//horseArr.push(normalWET);
+						horseArr.push(normalCRS);
+						horseArr.push(normalD);
+						horseArr.push(normal$);
+						horseArr.push(normalDLR);
+						horseArr.push(normalSum);
+						
+						if ( horseObj.FP == 1 ) {
+							horseObj.FPText = 'WIN';
+						} else if ( horseObj.FP == 2 || horseObj.FP == 3 ) {
+							horseObj.FPText = 'PLACE';
+						} else {
+							horseObj.FPText = 'NONE';
+						}
+						horseArr.push(horseObj.FPText);
+						
+						// if ( horseObj.NR > 0  && horseObj.FP == 1 ) { // Only output WIN 
+						if ( horseObj.NR > 0 ) {
+							input.push(horseArr);
+						}
 					}
 				}
 				
+				races.totalRaces++;
+				if ( race.maxNormalSumHorseFP == 1 ) {
+					races.pickedWinner++;
+				}
+				if ( race.maxNormalSumHorseFP == 2 || race.maxNormalSumHorseFP == 3 ) {
+					races.pickedPlace++;
+				}
 				
 			}
 
+			input.sort(compare);
+			
+			races.totalPlacesPercentage = (races.pickedWinner + races.pickedPlace) / races.totalRaces * 100;
+			
+			debugObject('Races', races);
+			
 			//debug(input);
 			
 			//input = [['1', '2', '3', '4'], ['a', 'b', 'c', 'd']];
@@ -222,6 +290,57 @@ function ESCSVDump() {
 		return Math.round(value / total * 1000);	
 	}
 	
+	function compare(a,b) {
+
+		var raceIDA = a[0];
+		var raceIDB = b[0];
+
+		var posA = a[14];
+		var posB = b[14];
+
+		var cpA = a[13];
+		var cpB = b[13];
+
+		//debug('a0: ' + a[0] + ' b0: ' + b[0] + ' a13: ' + a[13] + ' b13: ' + b[13]);
+		
+		if (raceIDA > raceIDB) {
+			return -1;
+		}
+		if (raceIDA < raceIDB) {
+			return 1;
+		}
+	
+		// to get here a[0] == b[0]
+		/*if ((posA == 'WIN' || posA == 'PLACE') && (posB == 'NONE')) {
+			return -1;
+		}
+		if ((posB == 'NONE') && (posB == 'WIN' || posB == 'PLACE')) {
+			return 1;
+		}
+		
+		if (posA == 'WIN' && posB !== 'WIN') {
+			return -1;
+		}
+		if (posA !== 'WIN' && posB == 'WIN') {
+			return 1;
+		}
+
+		if (posA == 'PLACE' && posB != 'WIN') {
+			return -1;
+		}
+		if (posA !== 'WIN' && posB == 'PLACE') {
+			return 1;
+		}*/
+
+		if (cpA > cpB) {
+			return -1;
+		}
+		if (cpA < cpB) {
+			return 1;
+		}
+
+		return 0;
+	}	
 	
 }
 
