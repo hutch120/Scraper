@@ -24,6 +24,15 @@ function ESCSVDump() {
 	// Elastic Search Client
 	var esclient;
 	_.esclient = esclient;
+	
+	var horsesArr;
+	_.horsesArr = horsesArr = [];
+	
+	var races;
+	_.races = races = {};
+
+	var csvColumns;
+	_.csvColumns = csvColumns = {};
 
 	/**
 	 * Set options for the class.
@@ -65,7 +74,7 @@ function ESCSVDump() {
 	 * @private
 	 */
 	_.getESDataPromise = function () {
-		debug('getESDataPromise');
+		//debug('getESDataPromise');
 
 		var size = 20000;
 		var dsl = {
@@ -86,7 +95,6 @@ function ESCSVDump() {
 			"facets" : {}
 
 		}
-		var input = [];
 
 		// return promise.
 		return _.esclient.search({
@@ -94,122 +102,162 @@ function ESCSVDump() {
 			type : _.opts.ElasticSearchType,
 			body : dsl
 		}).then(function (response) {
-			debug('Retreived all records.')
+			debug('Retreived ' + response.hits.hits.length + ' records.')
 			
+			_.buildDataStructure(response);
+			_.outputCSV();
+			//_.analyseHorses();
 			
-			var races = {};
-			races.totalRaces = 0;
-			races.pickedWinner = 0;
-			races.pickedPlace = 0;
-			
-			for (var key in response.hits.hits) {
-			
-				var race = {};
-				race.raceID = response.hits.hits[key]['_source'].raceID;
-				debug('RaceID: ' + race.raceID);
-				
-				race.maxNormalSum = 0;
-				race.horseCount = 0;
-				
-				//debug('key: ' + key);
-				//debugObject('response', response.hits.hits[key]['_source'].data.horses);
-				//debug('NR: ' + response.hits.hits[key]['_source'].data.horses[0].NR);
+		}, function (error) {
+			debug(error.message);
+			_.esclient.close();
+		});
+	}
 
-				var horseAttributeTotal = {};
-								
-				horseAttributeTotal.NR = 0;
-				horseAttributeTotal.CP = 0;
-				//horseAttributeTotal.HCP = 0; // Ignore: Always seems to be 0
-				horseAttributeTotal.CF = 0;
-				horseAttributeTotal.TIM = 0;
-				horseAttributeTotal.SCR = 0;
-				horseAttributeTotal.JA = 0;
-				horseAttributeTotal.TA = 0;
-				horseAttributeTotal.JT = 0;
-				horseAttributeTotal.BP = 0;
-				horseAttributeTotal.WET = 0;
-				horseAttributeTotal.CRS = 0;
-				horseAttributeTotal.D = 0;
-				horseAttributeTotal.$ = 0;
-				horseAttributeTotal.DLR = 0;
+	
+	/**
+	 * buildDataStructure
+	 *
+	 * @method buildDataStructure
+	 * @public
+	 */
+	_.buildDataStructure = function (response) {
+		
+		_.races.totalRaces = 0;
+		_.races.totalRacesConsidered = 0;
+		_.races.outrightWinnersPicked = 0;
+		_.races.placesPicked = 0;
+
+		/*
+		*  CP - Career performance assessment based on weight/class algorithms
+		*  CF - Current form measured by class/weight algorithms
+		*  TIM - Revolutionary time assessment (adjusted algorithm)
+		*  JA - Jockey ability algorithm
+		*  TA - Trainer ability algorithm
+		*  JT - Jockey/trainer combination algorithm
+		*  WT - Wet track performance algorithmCrs - Course suitability algorithm
+		*  D - Distance suitability algorithm
+		*  $ - Prizemoney earned algorithm
+		*  BP - Barrier position (course & distance) algorithm
+		*  DLR - days since last run algorithm
+		*/		
+		var columnCount = 0;
+		_.csvColumns.ID = columnCount++;
+		_.csvColumns.NR = columnCount++;
+		_.csvColumns.CP = columnCount++;
+		//_.csvColumns.HCP = columnCount++;
+		_.csvColumns.CF = columnCount++;
+		_.csvColumns.TIM = columnCount++;
+		//_.csvColumns.SCR = columnCount++;
+		_.csvColumns.JA = columnCount++;
+		_.csvColumns.TA = columnCount++;
+		_.csvColumns.JT = columnCount++;
+		_.csvColumns.BP = columnCount++;
+		//_.csvColumns.WET = columnCount++;
+		_.csvColumns.CRS = columnCount++;
+		_.csvColumns.D = columnCount++;
+		_.csvColumns.$ = columnCount++;
+		_.csvColumns.DLR = columnCount++;
+		_.csvColumns.NormalSum = columnCount++;		
+		
+		
+		for (var key in response.hits.hits) {
+		
+			var race = {};
+			race.ID = response.hits.hits[key]['_source'].raceID;
+			//debug('RaceID: ' + race.ID);
+			
+			race.maxNormalSum = 0;
+			race.horseCount = 0;
+			
+			//debug('key: ' + key);
+			//debugObject('response', response.hits.hits[key]['_source'].data.horses);
+			//debug('NR: ' + response.hits.hits[key]['_source'].data.horses[0].NR);
+
+			var horseAttributeTotal = {};
+							
+			horseAttributeTotal.NR = 0;
+			horseAttributeTotal.CP = 0;
+			//horseAttributeTotal.HCP = 0; // Ignore: Always seems to be 0
+			horseAttributeTotal.CF = 0;
+			horseAttributeTotal.TIM = 0;
+			horseAttributeTotal.SCR = 0;
+			horseAttributeTotal.JA = 0;
+			horseAttributeTotal.TA = 0;
+			horseAttributeTotal.JT = 0;
+			horseAttributeTotal.BP = 0;
+			horseAttributeTotal.WET = 0;
+			horseAttributeTotal.CRS = 0;
+			horseAttributeTotal.D = 0;
+			horseAttributeTotal.$ = 0;
+			horseAttributeTotal.DLR = 0;
+			
+			// Get totals in order to normalise the output.
+			for (var key2 in response.hits.hits[key]['_source'].data.horses) {
+				var horseObj = response.hits.hits[key]['_source'].data.horses[key2];
 				
-				// Get totals in order to normalise the output.
+				horseAttributeTotal.NR += horseObj.NR*1;
+				horseAttributeTotal.CP += horseObj.CP*1;
+				//horseAttributeTotal.HCP += horseObj.HCP*1; // Ignore: Always seems to be 0
+				horseAttributeTotal.CF += horseObj.CF*1;
+				horseAttributeTotal.TIM += horseObj.TIM*1;
+				//horseAttributeTotal.SCR += horseObj.SCR*1;
+				horseAttributeTotal.JA += horseObj.JA*1;
+				horseAttributeTotal.TA += horseObj.TA*1;
+				horseAttributeTotal.JT += horseObj.JT*1;
+				horseAttributeTotal.BP += horseObj.BP*1;
+				//horseAttributeTotal.WET += horseObj.WET*1;
+				horseAttributeTotal.CRS += horseObj.CRS*1;
+				horseAttributeTotal.D += horseObj.D*1;
+				horseAttributeTotal.$ += horseObj.$*1;
+				horseAttributeTotal.DLR += horseObj.DLR*1;
+				// Note FP is answer.
+				
+				race.horseCount++;
+			}
+			
+			//debugObject('horseAttributeTotal', horseAttributeTotal);
+			
+			if ( race.horseCount >= 8 && race.horseCount <= 14 ) {
+			
+				//debug('race.horseCount: ' + race.horseCount);
+			
 				for (var key2 in response.hits.hits[key]['_source'].data.horses) {
+										
+					var horseArr = [];
 					var horseObj = response.hits.hits[key]['_source'].data.horses[key2];
-					
-					horseAttributeTotal.NR += horseObj.NR*1;
-					horseAttributeTotal.CP += horseObj.CP*1;
-					//horseAttributeTotal.HCP += horseObj.HCP*1; // Ignore: Always seems to be 0
-					horseAttributeTotal.CF += horseObj.CF*1;
-					horseAttributeTotal.TIM += horseObj.TIM*1;
-					horseAttributeTotal.SCR += horseObj.SCR*1;
-					horseAttributeTotal.JA += horseObj.JA*1;
-					horseAttributeTotal.TA += horseObj.TA*1;
-					horseAttributeTotal.JT += horseObj.JT*1;
-					horseAttributeTotal.BP += horseObj.BP*1;
-					horseAttributeTotal.WET += horseObj.WET*1;
-					horseAttributeTotal.CRS += horseObj.CRS*1;
-					horseAttributeTotal.D += horseObj.D*1;
-					horseAttributeTotal.$ += horseObj.$*1;
-					horseAttributeTotal.DLR += horseObj.DLR*1;
-					// Note FP is answer.
-					
-					race.horseCount++;
-				}
-				
-				//debugObject('horseAttributeTotal', horseAttributeTotal);
-				
-				if ( race.horseCount >= 8 && race.horseCount <= 14 ) {
-				
-					debug('race.horseCount: ' + race.horseCount);
-				
-					for (var key2 in response.hits.hits[key]['_source'].data.horses) {
-											
-						var horseArr = [];
-						var horseObj = response.hits.hits[key]['_source'].data.horses[key2];
-											
-						var normalNR = normalise(horseObj.NR, horseAttributeTotal.NR);
-						var normalCP = normalise(horseObj.CP, horseAttributeTotal.CP);
-						//var normalHCP = normalise(horseObj.HCP, horseAttributeTotal.HCP);
-						var normalCF = normalise(horseObj.CF, horseAttributeTotal.CF);
-						var normalTIM = normalise(horseObj.TIM, horseAttributeTotal.TIM);
-						//var normalSCR = normalise(horseObj.SCR, horseAttributeTotal.SCR);
-						var normalJA = normalise(horseObj.JA, horseAttributeTotal.JA);
-						var normalTA = normalise(horseObj.TA, horseAttributeTotal.TA);
-						var normalJT = normalise(horseObj.JT, horseAttributeTotal.JT);
-						var normalBP = normalise(horseObj.BP, horseAttributeTotal.BP);
-						//var normalWET = normalise(horseObj.WET, horseAttributeTotal.WET);
-						var normalCRS = normalise(horseObj.CRS, horseAttributeTotal.CRS);
-						var normalD = normalise(horseObj.D, horseAttributeTotal.D);
-						var normal$ = normalise(horseObj.$, horseAttributeTotal.$);
-						var normalDLR = normalise(horseObj.DLR, horseAttributeTotal.DLR);
-						
-						var normalSum = normalNR + 
-							normalCP + 
-							// normalHCP
-							normalCF + 
-							normalTIM + 
-							// normalSCR
-							normalJA +
-							normalJT +
-							normalBP +
-							normalCRS +
-							normalD +
-							normal$ +
-							normalDLR;
+										
+					var normalNR = normalise(horseObj.NR, horseAttributeTotal.NR);
+					var normalCP = normalise(horseObj.CP, horseAttributeTotal.CP);
+					//var normalHCP = normalise(horseObj.HCP, horseAttributeTotal.HCP);
+					var normalCF = normalise(horseObj.CF, horseAttributeTotal.CF);
+					var normalTIM = normalise(horseObj.TIM, horseAttributeTotal.TIM);
+					//var normalSCR = normalise(horseObj.SCR, horseAttributeTotal.SCR);
+					var normalJA = normalise(horseObj.JA, horseAttributeTotal.JA);
+					var normalTA = normalise(horseObj.TA, horseAttributeTotal.TA);
+					var normalJT = normalise(horseObj.JT, horseAttributeTotal.JT);
+					var normalBP = normalise(horseObj.BP, horseAttributeTotal.BP);
+					//var normalWET = normalise(horseObj.WET, horseAttributeTotal.WET);
+					var normalCRS = normalise(horseObj.CRS, horseAttributeTotal.CRS);
+					var normalD = normalise(horseObj.D, horseAttributeTotal.D);
+					var normal$ = normalise(horseObj.$, horseAttributeTotal.$);
+					var normalDLR = normalise(horseObj.DLR, horseAttributeTotal.DLR);
+					var normalSum = normalNR + normalCP + normalCF + normalTIM + normalJA + normalTA + normalJT + normalBP + normalCRS + normalD + normal$ + normalDLR;
+
+					if ( horseObj.NR > 0 ) {
 						
 						if ( race.maxNormalSum < normalSum ) {
 							race.maxNormalSum = normalSum;
 							race.maxNormalSumHorseFP = horseObj.FP;
 						}
 						
-						horseArr.push(race.raceID);
+						horseArr.push(race.ID);
 						horseArr.push(normalNR);
 						horseArr.push(normalCP);
-						//horseArr.push(normalHCP));
+						//horseArr.push(normalHCP);
 						horseArr.push(normalCF);
 						horseArr.push(normalTIM);
-						//horseArr.push(normalSCR));
+						//horseArr.push(normalSCR);
 						horseArr.push(normalJA);
 						horseArr.push(normalTA);
 						horseArr.push(normalJT);
@@ -231,51 +279,114 @@ function ESCSVDump() {
 						horseArr.push(horseObj.FPText);
 						
 						// if ( horseObj.NR > 0  && horseObj.FP == 1 ) { // Only output WIN 
-						if ( horseObj.NR > 0 ) {
-							input.push(horseArr);
-						}
+
+						_.horsesArr.push(horseArr);
 					}
 				}
-				
-				races.totalRaces++;
-				if ( race.maxNormalSumHorseFP == 1 ) {
-					races.pickedWinner++;
-				}
-				if ( race.maxNormalSumHorseFP == 2 || race.maxNormalSumHorseFP == 3 ) {
-					races.pickedPlace++;
-				}
-				
 			}
+			
+			_.races.totalRaces++;
+			
+			_.analyseRace(race);
+			
+		}
 
-			input.sort(compare);
-			
-			races.totalPlacesPercentage = (races.pickedWinner + races.pickedPlace) / races.totalRaces * 100;
-			
-			debugObject('Races', races);
-			
-			//debug(input);
-			
-			//input = [['1', '2', '3', '4'], ['a', 'b', 'c', 'd']];
-			stringify(input, function (err, output) {
-				//debug(output);
+		_.csvColumns.sort = _.csvColumns.NormalSum;
+		_.horsesArr.sort(sortByIDAndColumnX);
+		
+		_.races.outrightWinnersPercentage = Math.round(_.races.outrightWinnersPicked / _.races.totalRacesConsidered * 1000) / 10;
+		_.races.placesPercentage = Math.round(_.races.placesPicked / _.races.totalRacesConsidered * 1000) / 10;
+		
+		debugObject('Races', _.races);
+		
+		//debug(_.horsesArr);
+		
 
-				fs.writeFile("./esdump.csv", output, function (err) {
-					if (err) {
-						console.log(err);
-					} else {
-						console.log("The file was saved!");
-					}
-				});
-			});
+		//debug('response ' + response.hits);
+		_.esclient.close();	
 
-			//debug('response ' + response.hits);
-			_.esclient.close();
-		}, function (error) {
-			debug(error.message);
-			_.esclient.close();
-		});
 	}
+	
+	
+	/**
+	 * outputCSV
+	 *
+	 * @method outputCSV
+	 * @public
+	 */
+	_.outputCSV = function () {
+	
+		//_.horsesArr = [['1', '2', '3', '4'], ['a', 'b', 'c', 'd']];
+		stringify(_.horsesArr, function (err, output) {
+			//debug(output);
 
+			fs.writeFile("./esdump.csv", output, function (err) {
+				if (err) {
+					console.log(err);
+				} else {
+					console.log("The file was saved!");
+				}
+			});
+		});
+	
+	}	
+	
+	
+	/**
+	 * analyseRace
+	 *
+	 * @method analyseRace
+	 * @public
+	 */
+	_.analyseRace = function (race) {
+
+		if ( race.maxNormalSum > 2600 ) {
+			_.races.totalRacesConsidered++;
+			if ( race.maxNormalSumHorseFP == 1 ) {
+				_.races.outrightWinnersPicked++;
+			}
+			if ( race.maxNormalSumHorseFP >= 1 && race.maxNormalSumHorseFP <= 3 ) {
+				_.races.placesPicked++;
+			}
+		}
+	
+	}	
+	
+	
+	/**
+	 * analyseHorses
+	 *
+	 * @method analyseHorses
+	 * @public
+	 */
+	_.analyseHorses = function () {
+
+		var horsesArr = _.horsesArr.slice();
+		
+		_.csvColumns.sort = _.csvColumns.NormalSum;
+		horsesArr.sort(sortByColumnX);
+
+		debug('============================')
+		debug('Analysis: Sort By Normal Sum');
+		for (var key in horsesArr) {
+			if ( key >= 10 ) break;
+			debug(horsesArr[key]);
+		}
+
+		debug('============================')
+		debug('Analysis: Sort By Jockey Ability');
+		_.csvColumns.sort = _.csvColumns.JA;
+		horsesArr.sort(sortByColumnX);
+		
+		for (var key in horsesArr) {
+			if ( key >= 10 ) break;
+			debug(horsesArr[key]);
+		}
+
+		
+	}	
+	
+	
 	// For request promise handling.
 	function normalise(value, total) {
 		if ( typeof value == 'undefined' 
@@ -290,23 +401,20 @@ function ESCSVDump() {
 		return Math.round(value / total * 1000);	
 	}
 	
-	function compare(a,b) {
+	function sortByIDAndColumnX(a,b) {
 
-		var raceIDA = a[0];
-		var raceIDB = b[0];
+		var IDA = a[_.csvColumns.ID];
+		var IDB = b[_.csvColumns.ID];
 
-		var posA = a[14];
-		var posB = b[14];
-
-		var cpA = a[13];
-		var cpB = b[13];
+		var sortA = a[_.csvColumns.sort];
+		var sortB = b[_.csvColumns.sort];
 
 		//debug('a0: ' + a[0] + ' b0: ' + b[0] + ' a13: ' + a[13] + ' b13: ' + b[13]);
 		
-		if (raceIDA > raceIDB) {
+		if (IDA > IDB) {
 			return -1;
 		}
-		if (raceIDA < raceIDB) {
+		if (IDA < IDB) {
 			return 1;
 		}
 	
@@ -332,15 +440,30 @@ function ESCSVDump() {
 			return 1;
 		}*/
 
-		if (cpA > cpB) {
+		if (sortA > sortB) {
 			return -1;
 		}
-		if (cpA < cpB) {
+		if (sortA < sortB) {
 			return 1;
 		}
 
 		return 0;
 	}	
+	
+	function sortByColumnX(a,b) {
+
+		var sortA = a[_.csvColumns.sort];
+		var sortB = b[_.csvColumns.sort];
+
+		if (sortA > sortB) {
+			return -1;
+		}
+		if (sortA < sortB) {
+			return 1;
+		}
+
+		return 0;
+	}		
 	
 }
 
